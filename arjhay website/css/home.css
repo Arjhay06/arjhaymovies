@@ -248,6 +248,33 @@
     .footer-links a:hover {
       text-decoration: underline;
     }
+    .episode-selector {
+      margin-top: 20px;
+      text-align: left;
+      color: #fff;
+    }
+    
+    .episode-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .episode-button {
+      padding: 8px 12px;
+      background: #1e1e1e;
+      color: #00ffcc;
+      border: 1px solid #00ffcc66;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    
+    .episode-button:hover {
+      background: #00ffcc22;
+    }
+    
     
     
     
