@@ -11,7 +11,6 @@ async function fetchTrending(type) {
 
 async function fetchTrendingAnime() {
   let allResults = [];
-
   for (let page = 1; page <= 3; page++) {
     const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
     const data = await res.json();
@@ -20,13 +19,7 @@ async function fetchTrendingAnime() {
     );
     allResults = allResults.concat(filtered);
   }
-
   return allResults;
-}
-
-function displayBanner(item) {
-  document.getElementById('banner').style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
-  document.getElementById('banner-title').textContent = item.title || item.name;
 }
 
 function displayList(items, containerId) {
@@ -34,11 +27,13 @@ function displayList(items, containerId) {
   container.innerHTML = '';
   items.forEach(item => {
     if (!item.poster_path) return;
-
+    if (!item.media_type) {
+      item.media_type = containerId.includes('tv') ? 'tv' : 'movie';
+    }
     const img = document.createElement('img');
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name;
-    img.style.cursor = "pointer";
+    img.classList.add('fade-in');
     img.onclick = () => showDetails(item);
     container.appendChild(img);
   });
@@ -57,14 +52,14 @@ function showDetails(item) {
 
 function changeServer() {
   const server = document.getElementById('server').value;
-  const type = currentItem.media_type === "movie" ? "movie" : "tv";
-  let embedURL = "";
+  const type = currentItem.media_type === 'movie' ? 'movie' : 'tv';
+  let embedURL = '';
 
-  if (server === "vidsrc.cc") {
+  if (server === 'vidsrc.cc') {
     embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
-  } else if (server === "vidsrc.me") {
+  } else if (server === 'vidsrc.me') {
     embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
-  } else if (server === "player.videasy.net") {
+  } else if (server === 'player.videasy.net') {
     embedURL = `https://player.videasy.net/${type}/${currentItem.id}`;
   }
 
@@ -74,24 +69,15 @@ function changeServer() {
 function displayEpisodes(item) {
   const episodeSelector = document.getElementById('episode-selector');
   const episodeList = document.getElementById('episode-list');
-
   if (item.media_type !== 'tv') {
     episodeSelector.style.display = 'none';
     return;
   }
-
-  // Dummy episodes for illustration (you can replace with real fetch logic if you have API access)
   episodeSelector.style.display = 'block';
   episodeList.innerHTML = '';
   for (let i = 1; i <= 10; i++) {
     const btn = document.createElement('button');
     btn.textContent = `Episode ${i}`;
-    btn.style.padding = '0.5rem 1rem';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '5px';
-    btn.style.background = '#222';
-    btn.style.color = '#fff';
-    btn.style.cursor = 'pointer';
     btn.onclick = () => {
       document.getElementById('modal-video').src = `https://vidsrc.cc/v2/embed/tv/${item.id}/${i}`;
     };
@@ -121,19 +107,18 @@ async function searchTMDB() {
     document.getElementById('search-results').innerHTML = '';
     return;
   }
-
   const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
   const data = await res.json();
-
   const container = document.getElementById('search-results');
   container.innerHTML = '';
   data.results.forEach(item => {
     if (!item.poster_path) return;
-
+    if (!item.media_type) {
+      item.media_type = 'movie';
+    }
     const img = document.createElement('img');
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name;
-    img.style.cursor = 'pointer';
     img.onclick = () => {
       closeSearchModal();
       showDetails(item);
@@ -142,15 +127,75 @@ async function searchTMDB() {
   });
 }
 
+let currentSlideIndex = 0;
+let slideItems = [];
+
+async function setupSlider() {
+  const movies = await fetchTrending('movie');
+  slideItems = movies.slice(0, 5);
+  const slidesContainer = document.getElementById('slides');
+  slidesContainer.innerHTML = '';
+  slideItems.forEach((item, index) => {
+    item.media_type = 'movie';
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    slide.style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
+    slide.innerHTML = `
+      <div class="slide-overlay">
+        <div class="meta">
+          <span>🎬 ${item.media_type}</span> • ⭐ ${Math.round(item.vote_average)} • 🕒 ${item.runtime || 'N/A'} mins
+        </div>
+        <h1>${item.title || item.name}</h1>
+        <p>${item.overview?.slice(0, 160) || 'No overview available.'}...</p>
+        <div class="buttons">
+          <button class="details" onclick="showDetailsFromIndex(${index})">DETAILS</button>
+          <button class="watch" onclick="showDetailsFromIndex(${index})">WATCH NOW</button>
+        </div>
+      </div>
+    `;
+    slidesContainer.appendChild(slide);
+  });
+  updateSlidePosition();
+  setInterval(nextSlide, 7000);
+}
+
+function updateSlidePosition() {
+  const slides = document.getElementById('slides');
+  slides.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+}
+
+function nextSlide() {
+  currentSlideIndex = (currentSlideIndex + 1) % slideItems.length;
+  updateSlidePosition();
+}
+
+function prevSlide() {
+  currentSlideIndex = (currentSlideIndex - 1 + slideItems.length) % slideItems.length;
+  updateSlidePosition();
+}
+
+function showDetailsFromIndex(index) {
+  showDetails(slideItems[index]);
+}
+
 async function init() {
+  await setupSlider();
   const movies = await fetchTrending('movie');
   const tvShows = await fetchTrending('tv');
   const anime = await fetchTrendingAnime();
-
-  displayBanner(movies[Math.floor(Math.random() * movies.length)]);
   displayList(movies, 'movies-list');
   displayList(tvShows, 'tvshows-list');
   displayList(anime, 'anime-list');
 }
+
+function scrollList(id, direction) {
+  const container = document.getElementById(id);
+  const scrollAmount = container.clientWidth * 0.8; // scroll by 80% of container width
+  container.scrollBy({
+    left: direction * scrollAmount,
+    behavior: 'smooth'
+  });
+}
+
 
 init();
