@@ -356,6 +356,35 @@
     <span class="close" onclick="closeSearchModal()">&times;</span>
     <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
     <div class="results" id="search-results"></div>
+    <!-- Movie Detail Modal -->
+<div id="modal" class="modal">
+  <div class="modal-container">
+    <div class="modal-left">
+      <iframe id="modal-video" src="" frameborder="0" allowfullscreen></iframe>
+      <div id="episode-selector">
+        <h3>Episodes</h3>
+        <div id="episode-list"></div>
+      </div>
+    </div>
+    <div class="modal-right">
+      <h2 id="modal-title">Movie Title</h2>
+      <p id="modal-description">Description goes here...</p>
+      <div class="rating" id="modal-rating">★★★</div>
+      <label for="server">Change Server:</label>
+      <select id="server" onchange="changeServer()">
+        <option value="vidsrc.cc">Vidsrc.cc</option>
+        <option value="vidsrc.me">Vidsrc.me</option>
+        <option value="player.videasy.net">Player.Videasy.net</option>
+      </select>
+      <h3>Recommendations</h3>
+      <div id="recommendations">
+        <!-- Recommendation thumbnails can go here -->
+      </div>
+    </div>
+    <button class="modal-close" onclick="closeModal()">×</button>
+  </div>
+</div>
+
   </div>
 </body>
 </html>
