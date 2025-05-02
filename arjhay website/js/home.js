@@ -2,6 +2,7 @@ const API_KEY = 'a1e72fd93ed59f56e6332813b9f8dcae';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/original';
 let currentItem;
+let currentSeasons = [];
 
 async function fetchTrending(type) {
   const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
@@ -34,18 +35,22 @@ function displayList(items, containerId) {
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name;
     img.classList.add('fade-in');
+    img.style.cursor = 'pointer';
     img.onclick = () => showDetails(item);
     container.appendChild(img);
   });
 }
 
-function showDetails(item) {
+async function showDetails(item) {
   currentItem = item;
+  if (!currentItem.media_type) currentItem.media_type = 'tv';
   document.getElementById('modal-title').textContent = item.title || item.name;
   document.getElementById('modal-description').textContent = item.overview || 'No description available.';
-  document.getElementById('modal-image').src = `${IMG_URL}${item.poster_path}`;
   document.getElementById('modal-rating').innerHTML = '★'.repeat(Math.round(item.vote_average / 2)) || 'N/A';
   changeServer();
+  if (item.media_type === 'tv') {
+    await loadSeasons(item);
+  }
   displayEpisodes(item);
   document.getElementById('modal').style.display = 'flex';
 }
@@ -61,28 +66,89 @@ function changeServer() {
     embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
   } else if (server === 'player.videasy.net') {
     embedURL = `https://player.videasy.net/${type}/${currentItem.id}`;
+  } else if (server === 'apimocine-movie') {
+    embedURL = `https://apimocine.vercel.app/movie/${currentItem.id}`;
+  } else if (server === 'apimocine-tv') {
+    embedURL = `https://apimocine.vercel.app/tv/${currentItem.id}`;
   }
 
   document.getElementById('modal-video').src = embedURL;
 }
 
-function displayEpisodes(item) {
+async function loadSeasons(item) {
+  const res = await fetch(`${BASE_URL}/tv/${item.id}?api_key=${API_KEY}`);
+  const data = await res.json();
+  currentSeasons = data.seasons || [];
+
+  const seasonSelector = document.getElementById('season-select');
+  const wrapper = document.getElementById('season-selector');
+  if (!seasonSelector || !wrapper) return;
+
+  seasonSelector.innerHTML = '';
+  wrapper.style.display = 'block';
+
+  currentSeasons.forEach((season, index) => {
+    const option = document.createElement('option');
+    option.value = season.season_number;
+    option.textContent = season.name || `Season ${season.season_number}`;
+    seasonSelector.appendChild(option);
+  });
+
+  seasonSelector.onchange = () => displayEpisodes(currentItem);
+}
+
+async function displayEpisodes(item) {
   const episodeSelector = document.getElementById('episode-selector');
   const episodeList = document.getElementById('episode-list');
+  const episodePagination = document.getElementById('episode-pagination');
+
   if (item.media_type !== 'tv') {
     episodeSelector.style.display = 'none';
     return;
   }
-  episodeSelector.style.display = 'block';
-  episodeList.innerHTML = '';
-  for (let i = 1; i <= 10; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = `Episode ${i}`;
-    btn.onclick = () => {
-      document.getElementById('modal-video').src = `https://vidsrc.cc/v2/embed/tv/${item.id}/${i}`;
-    };
-    episodeList.appendChild(btn);
+
+  const selectedSeason = document.getElementById('season-select').value || 1;
+
+  const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${selectedSeason}?api_key=${API_KEY}`);
+  const data = await res.json();
+  const episodes = data.episodes || [];
+
+  let currentPage = 1;
+  const episodesPerPage = 10;
+
+  function renderEpisodes(page) {
+    episodeList.innerHTML = '';
+    const start = (page - 1) * episodesPerPage;
+    const paginated = episodes.slice(start, start + episodesPerPage);
+    paginated.forEach(ep => {
+      const btn = document.createElement('button');
+      btn.textContent = `E${ep.episode_number}: ${ep.name}`;
+      btn.onclick = () => {
+        document.getElementById('modal-video').src = `https://vidsrc.cc/v2/embed/tv/${item.id}/${selectedSeason}/${ep.episode_number}`;
+      };
+      episodeList.appendChild(btn);
+    });
   }
+
+  function renderPagination() {
+    episodePagination.innerHTML = '';
+    const totalPages = Math.ceil(episodes.length / episodesPerPage);
+    for (let i = 1; i <= totalPages; i++) {
+      const pageBtn = document.createElement('button');
+      pageBtn.textContent = i;
+      if (i === currentPage) pageBtn.classList.add('active');
+      pageBtn.onclick = () => {
+        currentPage = i;
+        renderEpisodes(currentPage);
+        renderPagination();
+      };
+      episodePagination.appendChild(pageBtn);
+    }
+  }
+
+  episodeSelector.style.display = 'block';
+  renderEpisodes(currentPage);
+  renderPagination();
 }
 
 function closeModal() {
@@ -113,9 +179,7 @@ async function searchTMDB() {
   container.innerHTML = '';
   data.results.forEach(item => {
     if (!item.poster_path) return;
-    if (!item.media_type) {
-      item.media_type = 'movie';
-    }
+    if (!item.media_type) item.media_type = 'movie';
     const img = document.createElement('img');
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name;
@@ -190,12 +254,11 @@ async function init() {
 
 function scrollList(id, direction) {
   const container = document.getElementById(id);
-  const scrollAmount = container.clientWidth * 0.8; // scroll by 80% of container width
+  const scrollAmount = container.clientWidth * 0.8;
   container.scrollBy({
     left: direction * scrollAmount,
     behavior: 'smooth'
   });
 }
-
 
 init();
