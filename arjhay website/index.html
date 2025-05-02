@@ -8,50 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/home.css">
   <script defer src="js/home.js"></script>
-  <style>
-    .topbar-links {
-      display: flex;
-      gap: 20px;
-      font-size: 0.95rem;
-    }
-
-    .topbar-links a {
-      color: #ccc;
-      text-decoration: none;
-    }
-
-    .topbar-links a:hover {
-      color: #fff;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    footer {
-      padding: 1rem;
-      text-align: center;
-      background: #111;
-      color: #aaa;
-      margin-top: 2rem;
-    }
-
-    .footer-links {
-      margin-top: 10px;
-    }
-
-    .footer-links a {
-      color: #888;
-      margin: 0 10px;
-      text-decoration: none;
-    }
-
-    .footer-links a:hover {
-      color: #fff;
-    }
-  </style>
 </head>
 <body>
   <div class="main">
@@ -78,28 +34,25 @@
       <div class="list" id="movies-list"></div>
       <button class="nav next" onclick="scrollList('movies-list', 1)">❯</button>
     </div>
-    
+
     <div class="row">
       <h2>Trending TV Shows</h2>
       <button class="nav prev" onclick="scrollList('tvshows-list', -1)">❮</button>
       <div class="list" id="tvshows-list"></div>
       <button class="nav next" onclick="scrollList('tvshows-list', 1)">❯</button>
     </div>
-    
+
     <div class="row">
       <h2>Trending Anime</h2>
       <button class="nav prev" onclick="scrollList('anime-list', -1)">❮</button>
       <div class="list" id="anime-list"></div>
       <button class="nav next" onclick="scrollList('anime-list', 1)">❯</button>
     </div>
-    
-    
 
     <footer>
       <p>&copy; 2025 Arjhay TV. All rights reserved.</p>
       <div class="footer-links">
         <a href="#">Created By: Arjhay</a>
-        
       </div>
     </footer>
   </div>
@@ -107,31 +60,47 @@
   <div class="modal" id="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
-      <div class="modal-body" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-        <div style="flex: 1; min-width: 250px;">
-          <img id="modal-image" src="" alt="Poster" style="width: 100%; border-radius: 10px; margin-bottom: 1rem;" />
-          <h2 id="modal-title"></h2>
-          <div class="stars" id="modal-rating" style="margin: 0.5rem 0; color: gold;"></div>
-          <p id="modal-description"></p>
+      <div class="modal-body">
+        <!-- Left: Title, Rating, Description -->
+        <div style="flex: 1; min-width: 260px;">
+          <h2 id="modal-title" style="margin-bottom: 0.5rem;"></h2>
+          <div id="modal-rating" class="stars" style="margin-bottom: 0.5rem; color: gold;"></div>
+          <p id="modal-description" style="line-height: 1.6;"></p>
         </div>
-        <div style="flex: 2; min-width: 300px;">
+      
+        <!-- Right: Player, Server, Season, Episodes -->
+        <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column;">
+          <!-- Video Player -->
+          <div style="background: linear-gradient(135deg, #1e1e1e, #111); padding: 1rem; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.1); margin-bottom: 1rem;">
+            <iframe id="modal-video" frameborder="0" allowfullscreen style="width: 100%; height: 480px; border-radius: 10px;"></iframe>
+          </div>
+      
+          <!-- Server Selector -->
           <div class="server-selector" style="margin-bottom: 1rem;">
             <label for="server">Change Server:</label>
             <select id="server" onchange="changeServer()">
               <option value="vidsrc.cc">Vidsrc.cc</option>
               <option value="vidsrc.me">Vidsrc.me</option>
               <option value="player.videasy.net">Player.Videasy.net</option>
+              <option value="apimocine-movie">ApiMocine (Movie)</option>
+              <option value="apimocine-tv">ApiMocine (TV)</option>
             </select>
           </div>
-          <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="border-radius: 10px;"></iframe>
-          <div class="episode-selector" id="episode-selector" style="display: none; margin-top: 1rem;">
+      
+          <!-- Season Selector -->
+          <div class="season-selector" id="season-selector" style="margin-bottom: 1rem; display: none;">
+            <label for="season-select">Select Season:</label>
+            <select id="season-select" onchange="selectSeason()"></select>
+          </div>
+      
+          <!-- Episode List -->
+          <div class="episode-selector" id="episode-selector" style="display: none; flex: 1; overflow-y: auto;">
             <h3>Episodes</h3>
-            <div id="episode-list" class="episode-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+            <div id="episode-list" class="episode-list"></div>
+            <div id="episode-pagination" class="episode-pagination"></div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
   <div class="search-modal" id="search-modal">
     <span class="close" onclick="closeSearchModal()">&times;</span>
