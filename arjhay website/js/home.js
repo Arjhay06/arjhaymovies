@@ -51,6 +51,7 @@ function showDetails(item) {
   document.getElementById('modal-image').src = `${IMG_URL}${item.poster_path}`;
   document.getElementById('modal-rating').innerHTML = '★'.repeat(Math.round(item.vote_average / 2)) || 'N/A';
   changeServer();
+  displayEpisodes(item);
   document.getElementById('modal').style.display = 'flex';
 }
 
@@ -70,9 +71,38 @@ function changeServer() {
   document.getElementById('modal-video').src = embedURL;
 }
 
+function displayEpisodes(item) {
+  const episodeSelector = document.getElementById('episode-selector');
+  const episodeList = document.getElementById('episode-list');
+
+  if (item.media_type !== 'tv') {
+    episodeSelector.style.display = 'none';
+    return;
+  }
+
+  // Dummy episodes for illustration (you can replace with real fetch logic if you have API access)
+  episodeSelector.style.display = 'block';
+  episodeList.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = `Episode ${i}`;
+    btn.style.padding = '0.5rem 1rem';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '5px';
+    btn.style.background = '#222';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+    btn.onclick = () => {
+      document.getElementById('modal-video').src = `https://vidsrc.cc/v2/embed/tv/${item.id}/${i}`;
+    };
+    episodeList.appendChild(btn);
+  }
+}
+
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
   document.getElementById('modal-video').src = '';
+  document.getElementById('episode-selector').style.display = 'none';
 }
 
 function openSearchModal() {
@@ -124,6 +154,3 @@ async function init() {
 }
 
 init();
-
-
-
