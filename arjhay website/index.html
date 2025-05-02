@@ -6,180 +6,28 @@
   <title>Arjhay TV</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/home.css">
+  <script defer src="js/home.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
+    .topbar-links {
+      display: flex;
+      gap: 20px;
+      font-size: 0.95rem;
     }
 
-    body {
-      background-color: #0f0f0f;
+    .topbar-links a {
+      color: #ccc;
+      text-decoration: none;
+    }
+
+    .topbar-links a:hover {
       color: #fff;
-      display: flex;
-      height: 100vh;
-    }
-
-    .sidebar {
-      width: 80px;
-      background-color: #111;
-      padding: 1rem 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
-    }
-
-    .sidebar a {
-      color: #aaa;
-      font-size: 1.2rem;
-      text-align: center;
-      transition: color 0.3s ease;
-    }
-
-    .sidebar a:hover {
-      color: #fff;
-    }
-
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
     }
 
     .topbar {
-      padding: 1rem;
-      background: #161616;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-    }
-
-    .search-bar {
-      padding: 0.5rem 1rem;
-      border-radius: 25px;
-      border: none;
-      background: #222;
-      color: #fff;
-      width: 300px;
-    }
-
-    .search-bar::placeholder {
-      color: #888;
-    }
-
-    .banner {
-      height: 300px;
-      background-size: cover;
-      background-position: center;
-      position: relative;
-      display: flex;
-      align-items: flex-end;
-      padding: 2rem;
-      background-repeat: no-repeat;
-    }
-
-    .banner h1 {
-      font-size: 2rem;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-    }
-
-    .genres {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 1rem;
-      gap: 0.5rem;
-    }
-
-    .genres button {
-      background: #1c1c1c;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 999px;
-      color: #ddd;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .genres button:hover {
-      background: #333;
-    }
-
-    .row {
-      padding: 1rem;
-    }
-
-    .row h2 {
-      margin-bottom: 0.5rem;
-    }
-
-    .list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 1rem;
-    }
-
-    .list img {
-      width: 100%;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-
-    .list img:hover {
-      transform: scale(1.05);
-    }
-
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(10px);
-      display: none;
       align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-
-    .modal-content {
-      background: rgba(20, 20, 20, 0.9);
-      border-radius: 20px;
-      padding: 1.5rem;
-      width: 90%;
-      max-width: 800px;
-      color: #fff;
-    }
-
-    .modal-body {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .modal-body img {
-      width: 200px;
-      border-radius: 10px;
-    }
-
-    .modal-text {
-      flex: 1;
-    }
-
-    .stars {
-      margin: 0.5rem 0;
-      color: gold;
-    }
-
-    .close {
-      font-size: 2rem;
-      cursor: pointer;
-      float: right;
     }
 
     footer {
@@ -187,139 +35,72 @@
       text-align: center;
       background: #111;
       color: #aaa;
+      margin-top: 2rem;
+    }
+
+    .footer-links {
+      margin-top: 10px;
     }
 
     .footer-links a {
-      color: #aaa;
-      margin: 0 1rem;
+      color: #888;
+      margin: 0 10px;
       text-decoration: none;
     }
 
     .footer-links a:hover {
       color: #fff;
     }
-
-    .search-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 9999;
-    }
-
-    .search-modal input {
-      width: 60%;
-      padding: 1rem;
-      font-size: 1.2rem;
-      background: #222;
-      border: none;
-      border-radius: 10px;
-      color: white;
-    }
-
-    .results {
-      margin-top: 1rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 1rem;
-      width: 80%;
-    }
-
-    .results img {
-      width: 100%;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .navbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-  background-color: #111;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.logo {
-  display: none; /* Optional: Hide logo to keep search bar centered */
-}
-
-.search-container {
-  width: 100%;
-  max-width: 600px;
-  padding: 0 1rem;
-}
-
-.search-bar {
-  width: 100%;
-  padding: 12px 20px;
-  font-size: 16px;
-  background-color: #1e1e1e;
-  color: #fff;
-  border: none;
-  border-radius: 30px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-  transition: 0.3s ease;
-}
-
-.search-bar:focus {
-  outline: none;
-  background-color: #2c2c2c;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-}
-
   </style>
-  <script defer src="js/home.js"></script>
 </head>
 <body>
-  
-  <div class="sidebar">
-    <a href="#" title="Home"><i class="fas fa-home"></i></a>
-    <a href="#" title="Trending"><i class="fas fa-fire"></i></a>
-  </div>
   <div class="main">
     <div class="topbar">
-      <input type="text" class="search-bar" placeholder="Search Anime or Movie..." onfocus="openSearchModal()" />
+      <div class="topbar-center">
+        <input type="text" class="search-bar" placeholder="Search Anime or Movie..." onfocus="openSearchModal()" />
+      </div>
+      <div class="topbar-links">
+        <a href="#">About Us</a>
+        <a href="#">Contact</a>
+        <a href="#">Disclaimer</a>
+      </div>
     </div>
-    <div class="banner" id="banner">
-      <h1 id="banner-title"></h1>
+
+    <div class="slider" id="slider">
+      <div class="slides" id="slides"></div>
+      <button class="nav prev" onclick="prevSlide()">❮</button>
+      <button class="nav next" onclick="nextSlide()">❯</button>
     </div>
-    <div class="genres">
-      <button>Comedy</button>
-      <button>Drama</button>
-      <button>Horror</button>
-      <button>Fantasy</button>
-      <button>Romance</button>
-      <button>Sci-Fi</button>
-      <button>Slice of Life</button>
-      <button>Psychological</button>
-    </div>
+
     <div class="row">
       <h2>Trending Movies</h2>
+      <button class="nav prev" onclick="scrollList('movies-list', -1)">❮</button>
       <div class="list" id="movies-list"></div>
+      <button class="nav next" onclick="scrollList('movies-list', 1)">❯</button>
     </div>
+    
     <div class="row">
       <h2>Trending TV Shows</h2>
+      <button class="nav prev" onclick="scrollList('tvshows-list', -1)">❮</button>
       <div class="list" id="tvshows-list"></div>
+      <button class="nav next" onclick="scrollList('tvshows-list', 1)">❯</button>
     </div>
+    
     <div class="row">
       <h2>Trending Anime</h2>
+      <button class="nav prev" onclick="scrollList('anime-list', -1)">❮</button>
       <div class="list" id="anime-list"></div>
+      <button class="nav next" onclick="scrollList('anime-list', 1)">❯</button>
     </div>
+    
+    
+
     <footer>
       <p>&copy; 2025 Arjhay TV. All rights reserved.</p>
       <div class="footer-links">
-        <a href="#">Disclaimer</a>
         <a href="#">About Us</a>
         <a href="#">Contact</a>
+        <a href="#">Disclaimer</a>
       </div>
     </footer>
   </div>
@@ -327,64 +108,36 @@
   <div class="modal" id="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
-      <div class="modal-body">
-        <img id="modal-image" src="" alt="Poster" />
-        <div class="modal-text">
+      <div class="modal-body" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+        <div style="flex: 1; min-width: 250px;">
+          <img id="modal-image" src="" alt="Poster" style="width: 100%; border-radius: 10px; margin-bottom: 1rem;" />
           <h2 id="modal-title"></h2>
-          <div class="stars" id="modal-rating"></div>
+          <div class="stars" id="modal-rating" style="margin: 0.5rem 0; color: gold;"></div>
           <p id="modal-description"></p>
         </div>
+        <div style="flex: 2; min-width: 300px;">
+          <div class="server-selector" style="margin-bottom: 1rem;">
+            <label for="server">Change Server:</label>
+            <select id="server" onchange="changeServer()">
+              <option value="vidsrc.cc">Vidsrc.cc</option>
+              <option value="vidsrc.me">Vidsrc.me</option>
+              <option value="player.videasy.net">Player.Videasy.net</option>
+            </select>
+          </div>
+          <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="border-radius: 10px;"></iframe>
+          <div class="episode-selector" id="episode-selector" style="display: none; margin-top: 1rem;">
+            <h3>Episodes</h3>
+            <div id="episode-list" class="episode-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+          </div>
+        </div>
       </div>
-      <div class="server-selector">
-        <label for="server">Change Server:</label>
-        <select id="server" onchange="changeServer()">
-          <option value="vidsrc.cc">Vidsrc.cc</option>
-          <option value="vidsrc.me">Vidsrc.me</option>
-          <option value="player.videasy.net">Player.Videasy.net</option>
-        </select>
-      </div>
-      <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen></iframe>
-
-    <div class="episode-selector" id="episode-selector" style="display: none; margin-top: 1rem;">
-      <h3>Episodes</h3>
-      <div id="episode-list" class="episode-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
     </div>
   </div>
-</div>
 
   <div class="search-modal" id="search-modal">
     <span class="close" onclick="closeSearchModal()">&times;</span>
     <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
     <div class="results" id="search-results"></div>
-    <!-- Movie Detail Modal -->
-<div id="modal" class="modal">
-  <div class="modal-container">
-    <div class="modal-left">
-      <iframe id="modal-video" src="" frameborder="0" allowfullscreen></iframe>
-      <div id="episode-selector">
-        <h3>Episodes</h3>
-        <div id="episode-list"></div>
-      </div>
-    </div>
-    <div class="modal-right">
-      <h2 id="modal-title">Movie Title</h2>
-      <p id="modal-description">Description goes here...</p>
-      <div class="rating" id="modal-rating">★★★</div>
-      <label for="server">Change Server:</label>
-      <select id="server" onchange="changeServer()">
-        <option value="vidsrc.cc">Vidsrc.cc</option>
-        <option value="vidsrc.me">Vidsrc.me</option>
-        <option value="player.videasy.net">Player.Videasy.net</option>
-      </select>
-      <h3>Recommendations</h3>
-      <div id="recommendations">
-        <!-- Recommendation thumbnails can go here -->
-      </div>
-    </div>
-    <button class="modal-close" onclick="closeModal()">×</button>
-  </div>
-</div>
-
   </div>
 </body>
 </html>
