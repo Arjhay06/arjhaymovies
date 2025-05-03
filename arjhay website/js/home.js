@@ -92,8 +92,7 @@ function changeServer() {
 async function loadSeasons(item) {
   const res = await fetch(`${BASE_URL}/tv/${item.id}?api_key=${API_KEY}`);
   const data = await res.json();
-  currentSeasons = (data.seasons || []).filter(season => season.season_number > 0 && season.episode_count > 0);
-
+  currentSeasons = (data.seasons || []).filter(season => season.season_number >= 0);
 
   const seasonSelector = document.getElementById('season-select');
   const wrapper = document.getElementById('season-selector');
@@ -130,9 +129,16 @@ async function displayEpisodes(item) {
 
   const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${selectedSeason}?api_key=${API_KEY}`);
   const data = await res.json();
-  
-  // Filter only episodes belonging to this season (just in case)
   const episodes = (data.episodes || []).filter(ep => ep.season_number === selectedSeason);
+
+  episodeSelector.style.display = 'block';
+  episodeList.innerHTML = '';
+  episodePagination.innerHTML = '';
+
+  if (episodes.length === 0) {
+    episodeList.innerHTML = '<p style="color: #ccc;">No episodes available for this season.</p>';
+    return;
+  }
 
   let currentPage = 1;
   const episodesPerPage = 10;
@@ -167,7 +173,6 @@ async function displayEpisodes(item) {
     }
   }
 
-  episodeSelector.style.display = 'block';
   renderEpisodes(currentPage);
   renderPagination();
 }
