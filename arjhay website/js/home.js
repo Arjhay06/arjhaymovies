@@ -101,13 +101,13 @@ function changeServer() {
     embedURL = `https://apimocine.vercel.app/movie/${currentItem.id}`;
   } else if (server === 'apimocine-tv') {
     embedURL = `https://apimocine.vercel.app/tv/${currentItem.id}`;
-  } else if (server === 'gdriveplayer') {
-    embedURL = `https://gdriveplayer.to/embed2.php?tmdb=${currentItem.id}`;
   } else if (server === '2embed') {
     embedURL = `https://www.2embed.cc/embed${type === 'movie' ? '' : 'tv'}/${currentItem.id}`;
   } else if (server === '2anime.xyz') {
     const titleSlug = (currentItem.name || currentItem.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    embedURL = `https://2anime.xyz/embed/{ANIME-TITLE}-{EPISODE-NUMBER}`;
+    embedURL = `https://2anime.xyz/embed/${titleSlug}-episode-${currentItem.episode || 1}`;
+  } else if (server === 'multiembed.mov') {
+    embedURL = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1`;
   }
 
   document.getElementById('modal-video').src = embedURL;
