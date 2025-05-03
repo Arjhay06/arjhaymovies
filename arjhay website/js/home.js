@@ -83,7 +83,7 @@ function changeServer() {
     }
   } else if (server === '2anime') {
     const titleSlug = (currentItem.name || currentItem.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    embedURL = `https://2anime.xyz/embed/${titleSlug}-episode-1`; // default episode
+    embedURL = `https://2anime.xyz/embed/${titleSlug}-episode-1`;
   }
 
   document.getElementById('modal-video').src = embedURL;
@@ -221,7 +221,12 @@ let slideItems = [];
 
 async function setupSlider() {
   const movies = await fetchTrending('movie');
-  slideItems = movies.slice(0, 5);
+  slideItems = await Promise.all(movies.slice(0, 5).map(async (item) => {
+    const details = await fetch(`${BASE_URL}/movie/${item.id}?api_key=${API_KEY}`);
+    const full = await details.json();
+    item.runtime = full.runtime || 'N/A';
+    return item;
+  }));
   const slidesContainer = document.getElementById('slides');
   slidesContainer.innerHTML = '';
   slideItems.forEach((item, index) => {
@@ -287,6 +292,4 @@ function scrollList(id, direction) {
 }
 
 init();
-
-// Make search function accessible to HTML inline event
 window.searchTMDB = searchTMDB;
