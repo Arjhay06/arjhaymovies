@@ -44,25 +44,23 @@ function displayList(items, containerId) {
 async function showDetails(item) {
   currentItem = item;
   addToHistory(item);
+
   function addToHistory(item) {
     let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
-  
-    // Avoid duplicates
     history = history.filter(i => i.id !== item.id);
-  
     history.unshift({
       id: item.id,
       title: item.title || item.name,
       poster_path: item.poster_path,
-      media_type: item.media_type
+      media_type: item.media_type,
+      season: item.season || null,
+      episode: item.episode || null
     });
-  
-    // Limit to last 20 items
     history = history.slice(0, 20);
-  
     localStorage.setItem('watchHistory', JSON.stringify(history));
     renderHistory();
   }
+
   if (!currentItem.media_type) currentItem.media_type = 'tv';
   document.getElementById('modal-title').textContent = item.title || item.name;
   document.getElementById('modal-description').textContent = item.overview || 'No description available.';
@@ -96,11 +94,7 @@ function changeServer() {
   } else if (server === 'gdriveplayer') {
     embedURL = `https://gdriveplayer.to/embed2.php?tmdb=${currentItem.id}`;
   } else if (server === '2embed') {
-    if (type === 'movie') {
-      embedURL = `https://www.2embed.cc/embed/${currentItem.id}`;
-    } else {
-      embedURL = `https://www.2embed.cc/embedtv/${currentItem.id}`;
-    }
+    embedURL = `https://www.2embed.cc/embed${type === 'movie' ? '' : 'tv'}/${currentItem.id}`;
   } else if (server === '2anime') {
     const titleSlug = (currentItem.name || currentItem.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
     embedURL = `https://2anime.xyz/embed/${titleSlug}-episode-1`;
@@ -128,7 +122,9 @@ async function loadSeasons(item) {
     seasonSelector.appendChild(option);
   });
 
-  if (currentSeasons.length > 0 && !seasonSelector.value) {
+  if (item.season != null) {
+    seasonSelector.value = item.season;
+  } else if (currentSeasons.length > 0) {
     seasonSelector.value = currentSeasons[0].season_number;
   }
 
@@ -145,7 +141,11 @@ async function displayEpisodes(item) {
     return;
   }
 
-  const selectedSeason = parseInt(document.getElementById('season-select').value || 1);
+  let selectedSeason = parseInt(document.getElementById('season-select').value || 1);
+  if (item.season != null) {
+    selectedSeason = item.season;
+    document.getElementById('season-select').value = selectedSeason;
+  }
 
   const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${selectedSeason}?api_key=${API_KEY}`);
   const data = await res.json();
@@ -170,9 +170,26 @@ async function displayEpisodes(item) {
     paginated.forEach(ep => {
       const btn = document.createElement('button');
       btn.textContent = `E${ep.episode_number}: ${ep.name}`;
+
+      if (item.episode === ep.episode_number && item.season === selectedSeason) {
+        btn.classList.add('active-episode');
+      }
+
       btn.onclick = () => {
         document.getElementById('modal-video').src = `https://vidsrc.cc/v2/embed/tv/${item.id}/${selectedSeason}/${ep.episode_number}`;
+        document.querySelectorAll('#episode-list button').forEach(b => b.classList.remove('active-episode'));
+        btn.classList.add('active-episode');
+
+        let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+        history = history.map(h => {
+          if (h.id === item.id) {
+            return { ...h, season: selectedSeason, episode: ep.episode_number };
+          }
+          return h;
+        });
+        localStorage.setItem('watchHistory', JSON.stringify(history));
       };
+
       episodeList.appendChild(btn);
     });
   }
