@@ -423,3 +423,61 @@ footer {
 .fade-in {
   animation: fadeIn 1s ease-in-out;
 }
+
+.search-box {
+  position: relative;
+  width: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.2rem;
+  background: #222;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  padding-right: 40px; /* space for the X button */
+}
+
+.search-close {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.search-close:hover {
+  color: #ff5555;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  margin-right: 1rem;
+}
+
+.logo-text {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.8rem;
+  color: #00ffc3;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.small-tv {
+  font-size: 0.6em;
+  color: #ffffffcc;
+  margin-left: 3px;
+}
+
+
+
