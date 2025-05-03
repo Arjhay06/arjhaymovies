@@ -359,4 +359,5 @@ function renderHistory() {
 }
 
 init();
+renderHistory(); // 👈 This will show history on refresh
 window.searchTMDB = searchTMDB;
