@@ -70,6 +70,16 @@ function changeServer() {
     embedURL = `https://apimocine.vercel.app/movie/${currentItem.id}`;
   } else if (server === 'apimocine-tv') {
     embedURL = `https://apimocine.vercel.app/tv/${currentItem.id}`;
+  } else if (server === 'gdriveplayer') {
+    embedURL = `https://gdriveplayer.to/embed2.php?tmdb=${currentItem.id}`;
+    document.getElementById('episode-selector').style.display = 'none'; // hide
+  } else if (server === '2embed') {
+    if (type === 'movie') {
+      embedURL = `https://www.2embed.cc/embed/${currentItem.id}`;
+    } else {
+      embedURL = `https://www.2embed.cc/embedtv/${currentItem.id}`;
+    }
+    document.getElementById('episode-selector').style.display = 'none'; // hide
   }
 
   document.getElementById('modal-video').src = embedURL;
