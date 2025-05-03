@@ -499,5 +499,16 @@ footer {
   margin-left: 3px;
 }
 
+.episode-list button.active-episode {
+  background-color: #00ffcc;
+  color: #000;
+  font-weight: bold;
+  border-color: #00ffcc;
+}
 
 
+.active-episode {
+  background-color: #0ff;
+  color: #000;
+  font-weight: bold;
+}
