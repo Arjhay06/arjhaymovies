@@ -43,6 +43,14 @@ function displayList(items, containerId) {
 
 async function showDetails(item) {
   currentItem = item;
+
+  // Use saved history data if available
+  const history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  const saved = history.find(h => h.id === item.id);
+  if (saved) {
+    item.season = saved.season;
+    item.episode = saved.episode;
+  }
   addToHistory(item);
 
   function addToHistory(item) {
@@ -168,30 +176,38 @@ async function displayEpisodes(item) {
     const start = (page - 1) * episodesPerPage;
     const paginated = episodes.slice(start, start + episodesPerPage);
     paginated.forEach(ep => {
-      const btn = document.createElement('button');
-      btn.textContent = `E${ep.episode_number}: ${ep.name}`;
+  const btn = document.createElement('button');
+  btn.textContent = `E${ep.episode_number}: ${ep.name}`;
+  btn.onclick = () => {
+    // Update the video player
+    document.getElementById('modal-video').src = `https://vidsrc.cc/v2/embed/tv/${item.id}/${selectedSeason}/${ep.episode_number}`;
 
-      if (item.episode === ep.episode_number && item.season === selectedSeason) {
-        btn.classList.add('active-episode');
+    // 🔹 Highlight this episode
+    document.querySelectorAll('#episode-list button').forEach(b => b.classList.remove('active-episode'));
+    btn.classList.add('active-episode');
+
+    // 🔹 Update history with the season and episode info
+    let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+    history = history.map(h => {
+      if (h.id === item.id) {
+        return {
+          ...h,
+          season: selectedSeason,
+          episode: ep.episode_number
+        };
       }
-
-      btn.onclick = () => {
-        document.getElementById('modal-video').src = `https://vidsrc.cc/v2/embed/tv/${item.id}/${selectedSeason}/${ep.episode_number}`;
-        document.querySelectorAll('#episode-list button').forEach(b => b.classList.remove('active-episode'));
-        btn.classList.add('active-episode');
-
-        let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
-        history = history.map(h => {
-          if (h.id === item.id) {
-            return { ...h, season: selectedSeason, episode: ep.episode_number };
-          }
-          return h;
-        });
-        localStorage.setItem('watchHistory', JSON.stringify(history));
-      };
-
-      episodeList.appendChild(btn);
+      return h;
     });
+    localStorage.setItem('watchHistory', JSON.stringify(history));
+  };
+
+  // 🔹 Highlight saved episode
+  if (item.episode === ep.episode_number && selectedSeason === item.season) {
+    btn.classList.add('active-episode');
+  }
+
+  episodeList.appendChild(btn);
+});
   }
 
   function renderPagination() {
