@@ -57,6 +57,7 @@
     </footer>
   </div>
 
+  <!-- Movie/Show Modal -->
   <div class="modal" id="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
@@ -74,7 +75,7 @@
           <div style="background: linear-gradient(135deg, #1e1e1e, #111); padding: 1rem; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.1); margin-bottom: 1rem;">
             <iframe id="modal-video" frameborder="0" allowfullscreen style="width: 100%; height: 480px; border-radius: 10px;"></iframe>
           </div>
-      
+
           <!-- Server Selector -->
           <div class="server-selector" style="margin-bottom: 1rem;">
             <label for="server">Change Server:</label>
@@ -87,16 +88,15 @@
               <option value="gdriveplayer">GDrivePlayer</option>
               <option value="apimocine-movie">ApiMocine (Movie)</option>
               <option value="apimocine-tv">ApiMocine (TV)</option>
-              
-              
             </select>
-      
+          </div>
+
           <!-- Season Selector -->
           <div class="season-selector" id="season-selector" style="margin-bottom: 1rem; display: none;">
             <label for="season-select">Select Season:</label>
             <select id="season-select" onchange="selectSeason()"></select>
           </div>
-      
+
           <!-- Episode List -->
           <div class="episode-selector" id="episode-selector" style="display: none; flex: 1; overflow-y: auto;">
             <h3>Episodes</h3>
@@ -105,7 +105,10 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- ✅ Moved OUTSIDE of modal -->
   <div class="search-modal" id="search-modal">
     <span class="close" onclick="closeSearchModal()">&times;</span>
     <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
