@@ -6,12 +6,16 @@
   <title>Arjhay TV</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/home.css">
   <script defer src="js/home.js"></script>
 </head>
 <body>
   <div class="main">
     <div class="topbar">
+      <div class="logo">
+        <span class="logo-text">Arjhay<span class="small-tv">TV</span></span>
+      </div>
       <div class="topbar-center">
         <input type="text" class="search-bar" placeholder="Search Anime or Movie..." onfocus="openSearchModal()" />
       </div>
@@ -110,8 +114,10 @@
 
   <!-- ✅ Moved OUTSIDE of modal -->
   <div class="search-modal" id="search-modal">
-    <span class="close" onclick="closeSearchModal()">&times;</span>
-    <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
+      <button class="search-close" onclick="closeSearchModal()">×</button>
+    </div>
     <div class="results" id="search-results"></div>
   </div>
 </body>
