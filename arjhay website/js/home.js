@@ -133,13 +133,30 @@ async function loadSeasons(item) {
     seasonSelector.appendChild(option);
   });
 
-  if (item.season != null) {
-    seasonSelector.value = item.season;
-  } else if (currentSeasons.length > 0) {
-    seasonSelector.value = currentSeasons[0].season_number;
-  }
+  let initialSeason = item.season != null ? item.season : (currentSeasons[0]?.season_number || 1);
+seasonSelector.value = initialSeason;
 
-  seasonSelector.onchange = () => displayEpisodes(currentItem);
+seasonSelector.onchange = () => {
+  // ✅ Save new season in history
+  currentItem.season = parseInt(seasonSelector.value);
+  currentItem.episode = null; // Reset episode when changing season
+
+  let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  history = history.map(h => {
+    if (h.id === currentItem.id) {
+      return {
+        ...h,
+        season: currentItem.season,
+        episode: null
+      };
+    }
+    return h;
+  });
+  localStorage.setItem('watchHistory', JSON.stringify(history));
+
+  // ✅ Load new season
+  displayEpisodes(currentItem);
+};
 }
 
 async function displayEpisodes(item) {
