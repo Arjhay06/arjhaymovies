@@ -282,3 +282,6 @@ function scrollList(id, direction) {
 }
 
 init();
+
+// Make search function accessible to HTML inline event
+window.searchTMDB = searchTMDB;
