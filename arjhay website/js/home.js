@@ -47,11 +47,14 @@ async function showDetails(item) {
   document.getElementById('modal-title').textContent = item.title || item.name;
   document.getElementById('modal-description').textContent = item.overview || 'No description available.';
   document.getElementById('modal-rating').innerHTML = '★'.repeat(Math.round(item.vote_average / 2)) || 'N/A';
-  changeServer();
+  document.getElementById('episode-selector').style.display = 'block';
+  document.getElementById('season-selector').style.display = 'block';
+
   if (item.media_type === 'tv') {
     await loadSeasons(item);
   }
   displayEpisodes(item);
+  changeServer();
   document.getElementById('modal').style.display = 'flex';
 }
 
@@ -72,14 +75,15 @@ function changeServer() {
     embedURL = `https://apimocine.vercel.app/tv/${currentItem.id}`;
   } else if (server === 'gdriveplayer') {
     embedURL = `https://gdriveplayer.to/embed2.php?tmdb=${currentItem.id}`;
-    document.getElementById('episode-selector').style.display = 'none'; // hide
   } else if (server === '2embed') {
     if (type === 'movie') {
       embedURL = `https://www.2embed.cc/embed/${currentItem.id}`;
     } else {
       embedURL = `https://www.2embed.cc/embedtv/${currentItem.id}`;
     }
-    document.getElementById('episode-selector').style.display = 'none'; // hide
+  } else if (server === '2anime') {
+    const titleSlug = (currentItem.name || currentItem.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    embedURL = `https://2anime.xyz/embed/${titleSlug}-episode-1`; // default episode
   }
 
   document.getElementById('modal-video').src = embedURL;
@@ -88,7 +92,8 @@ function changeServer() {
 async function loadSeasons(item) {
   const res = await fetch(`${BASE_URL}/tv/${item.id}?api_key=${API_KEY}`);
   const data = await res.json();
-  currentSeasons = data.seasons || [];
+  currentSeasons = (data.seasons || []).filter(season => season.season_number > 0 && season.episode_count > 0);
+
 
   const seasonSelector = document.getElementById('season-select');
   const wrapper = document.getElementById('season-selector');
@@ -97,12 +102,16 @@ async function loadSeasons(item) {
   seasonSelector.innerHTML = '';
   wrapper.style.display = 'block';
 
-  currentSeasons.forEach((season, index) => {
+  currentSeasons.forEach(season => {
     const option = document.createElement('option');
     option.value = season.season_number;
     option.textContent = season.name || `Season ${season.season_number}`;
     seasonSelector.appendChild(option);
   });
+
+  if (currentSeasons.length > 0 && !seasonSelector.value) {
+    seasonSelector.value = currentSeasons[0].season_number;
+  }
 
   seasonSelector.onchange = () => displayEpisodes(currentItem);
 }
@@ -117,11 +126,13 @@ async function displayEpisodes(item) {
     return;
   }
 
-  const selectedSeason = document.getElementById('season-select').value || 1;
+  const selectedSeason = parseInt(document.getElementById('season-select').value || 1);
 
   const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${selectedSeason}?api_key=${API_KEY}`);
   const data = await res.json();
-  const episodes = data.episodes || [];
+  
+  // Filter only episodes belonging to this season (just in case)
+  const episodes = (data.episodes || []).filter(ep => ep.season_number === selectedSeason);
 
   let currentPage = 1;
   const episodesPerPage = 10;
@@ -164,7 +175,6 @@ async function displayEpisodes(item) {
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
   document.getElementById('modal-video').src = '';
-  document.getElementById('episode-selector').style.display = 'none';
 }
 
 function openSearchModal() {
