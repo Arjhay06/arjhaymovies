@@ -43,8 +43,6 @@ function displayList(items, containerId) {
 
 async function showDetails(item) {
   currentItem = item;
-
-  // Use saved history data if available
   const history = JSON.parse(localStorage.getItem('watchHistory')) || [];
   const saved = history.find(h => h.id === item.id);
   if (saved) {
@@ -90,7 +88,11 @@ function changeServer() {
   let embedURL = '';
 
   if (server === 'vidsrc.cc') {
-    embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+    if (currentItem.season && currentItem.episode) {
+      embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+    } else {
+      embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+    }
   } else if (server === 'vidsrc.me') {
     embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
   } else if (server === 'player.videasy.net') {
@@ -110,6 +112,7 @@ function changeServer() {
 
   document.getElementById('modal-video').src = embedURL;
 }
+
 
 async function loadSeasons(item) {
   const res = await fetch(`${BASE_URL}/tv/${item.id}?api_key=${API_KEY}`);
