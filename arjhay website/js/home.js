@@ -43,6 +43,26 @@ function displayList(items, containerId) {
 
 async function showDetails(item) {
   currentItem = item;
+  addToHistory(item);
+  function addToHistory(item) {
+    let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  
+    // Avoid duplicates
+    history = history.filter(i => i.id !== item.id);
+  
+    history.unshift({
+      id: item.id,
+      title: item.title || item.name,
+      poster_path: item.poster_path,
+      media_type: item.media_type
+    });
+  
+    // Limit to last 20 items
+    history = history.slice(0, 20);
+  
+    localStorage.setItem('watchHistory', JSON.stringify(history));
+    renderHistory();
+  }
   if (!currentItem.media_type) currentItem.media_type = 'tv';
   document.getElementById('modal-title').textContent = item.title || item.name;
   document.getElementById('modal-description').textContent = item.overview || 'No description available.';
@@ -288,6 +308,36 @@ function scrollList(id, direction) {
   container.scrollBy({
     left: direction * scrollAmount,
     behavior: 'smooth'
+  });
+}
+
+function renderHistory() {
+  const container = document.getElementById('history-list');
+  if (!container) return;
+  const history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  container.innerHTML = '';
+  history.forEach(item => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'history-item';
+
+    const img = document.createElement('img');
+    img.src = `${IMG_URL}${item.poster_path}`;
+    img.alt = item.title;
+    img.onclick = () => showDetails(item);
+
+    const btn = document.createElement('button');
+    btn.textContent = '✕';
+    btn.className = 'remove-btn';
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const updated = history.filter(h => h.id !== item.id);
+      localStorage.setItem('watchHistory', JSON.stringify(updated));
+      renderHistory();
+    };
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(btn);
+    container.appendChild(wrapper);
   });
 }
 
