@@ -104,8 +104,7 @@ function changeServer() {
   } else if (server === '2embed') {
     embedURL = `https://www.2embed.cc/embed${type === 'movie' ? '' : 'tv'}/${currentItem.id}`;
   } else if (server === '2anime.xyz') {
-    const titleSlug = (currentItem.name || currentItem.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    embedURL = `https://2anime.xyz/embed/${titleSlug}-episode-${currentItem.episode || 1}`;
+    embedURL = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
   } else if (server === 'multiembed.mov') {
     embedURL = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1`;
   }
