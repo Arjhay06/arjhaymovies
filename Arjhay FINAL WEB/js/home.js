@@ -1,15 +1,13 @@
 const API_KEY = 'a1e72fd93ed59f56e6332813b9f8dcae';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/original';
+
 let currentItem = {};
 let currentSeasons = [];
 let currentSlideIndex = 0;
 let slideItems = [];
 
-/**
- * Truncate a string to `maxLength` characters,
- * appending “…” if it’s longer.
- */
+/** Truncate long titles */
 function truncateTitle(str, maxLength = 25) {
   if (typeof str !== 'string') return '';
   return str.length > maxLength
@@ -17,69 +15,114 @@ function truncateTitle(str, maxLength = 25) {
     : str;
 }
 
-// Detect watch page
 function isWatchPage() {
-  return window.location.pathname.endsWith('watch.html');
+  return window.location.pathname.includes('watch');
 }
 
-// Open search modal
+/*─── Modal Search ─────────────────────────────────────────────────────────────*/
 function openSearchModal() {
-  const modal = document.getElementById('search-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
-  const input = document.getElementById('search-input');
-  input.value = '';
-  document.getElementById('search-results').innerHTML = '';
-  input.focus();
+  const m = document.getElementById('search-modal');
+  if (!m) return;
+  m.style.display = 'flex';
 }
-
-// Close search modal
 function closeSearchModal() {
-  const modal = document.getElementById('search-modal');
-  if (!modal) return;
-  modal.style.display = 'none';
-  document.getElementById('search-results').innerHTML = '';
+  const m = document.getElementById('search-modal');
+  if (!m) return;
+  m.style.display = 'none';
 }
 
-// Add or update watch history
-function addToHistory(item) {
-  const entry = {
-    id: item.id,
-    title: item.title || item.name || '',
-    poster_path: item.poster_path || item.poster || '',
-    media_type: item.media_type,
-    season: item.season || null,
-    episode: item.episode || null
-  };
-  let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
-  history = history.filter(i => i.id !== entry.id);
-  history.unshift(entry);
-  history = history.slice(0, 20);
-  localStorage.setItem('watchHistory', JSON.stringify(history));
-  renderHistory();
+/*─── Slider Controls ──────────────────────────────────────────────────────────*/
+function nextSlide() {
+  currentSlideIndex = (currentSlideIndex + 1) % slideItems.length;
+  updateSlidePosition();
+}
+function prevSlide() {
+  currentSlideIndex = (currentSlideIndex - 1 + slideItems.length) % slideItems.length;
+  updateSlidePosition();
+}
+function updateSlidePosition() {
+  const slides = document.getElementById('slides');
+  const shift = (currentSlideIndex * 100) / slideItems.length;
+  slides.style.transform = `translateX(-${shift}%)`;
 }
 
-// Initialize on page load
+/*─── Horizontal Scrolling ─────────────────────────────────────────────────────*/
+function scrollList(id, dir) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  c.scrollBy({ left: dir * c.clientWidth, behavior: 'smooth' });
+}
+
+/*─── Search TMDB ──────────────────────────────────────────────────────────────*/
+async function searchTMDB() {
+  const q = document.getElementById('search-input').value.trim();
+  const cont = document.getElementById('search-results');
+  cont.innerHTML = '';
+  if (!q) return;
+
+  const res = await fetch(
+    `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(q)}`
+  );
+  const data = await res.json();
+
+  data.results.forEach(item => {
+    if (!item.poster_path) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'search-result-item';
+
+    const img = document.createElement('img');
+    img.src = `${IMG_URL}${item.poster_path}`;
+    img.alt = item.title || item.name;
+    img.onclick = () => {
+      const p = new URLSearchParams({
+        id: item.id,
+        media_type: item.media_type,
+        title: item.title || item.name,
+        poster: item.poster_path
+      });
+      window.location.href = `/watch.html?${p}`;
+    };
+
+    const cap = document.createElement('p');
+    cap.textContent = truncateTitle(item.title || item.name, 20);
+
+    wrap.appendChild(img);
+    wrap.appendChild(cap);
+    cont.appendChild(wrap);
+  });
+}
+
+/*─── INIT ────────────────────────────────────────────────────────────────────*/
 async function init() {
   window.openSearchModal = openSearchModal;
   window.closeSearchModal = closeSearchModal;
   window.searchTMDB = searchTMDB;
   window.nextSlide = nextSlide;
   window.prevSlide = prevSlide;
+  window.scrollList = scrollList;
+
+  // Header-bar “Enter” → open search
+  const hs = document.querySelector('.search-bar');
+  if (hs) hs.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      openSearchModal();
+      document.getElementById('search-input').value = hs.value.trim();
+      searchTMDB();
+    }
+  });
 
   if (isWatchPage()) {
-    const params = new URLSearchParams(window.location.search);
-    const id = parseInt(params.get('id'));
-    const media_type = params.get('media_type');
-    const title = params.get('title');
-    const poster = params.get('poster');
-    const season = params.get('season') ? parseInt(params.get('season')) : null;
-    const episode = params.get('episode') ? parseInt(params.get('episode')) : null;
-
-    currentItem = { id, media_type, title, poster_path: poster, season, episode };
+    const p = new URLSearchParams(window.location.search);
+    currentItem = {
+      id: parseInt(p.get('id')),
+      media_type: p.get('media_type'),
+      title: p.get('title'),
+      poster_path: p.get('poster'),
+      season: p.get('season') ? parseInt(p.get('season')) : null,
+      episode: p.get('episode') ? parseInt(p.get('episode')) : null
+    };
     addToHistory(currentItem);
-
-    if (media_type === 'tv') {
+    if (currentItem.media_type === 'tv') {
       await loadSeasons(currentItem);
       await displayEpisodes(currentItem);
     }
@@ -87,10 +130,10 @@ async function init() {
   } else {
     await setupSlider();
     const movies = await fetchTrending('movie');
-    const tvShows = await fetchTrending('tv');
+    const tvs = await fetchTrending('tv');
     const anime = await fetchTrendingAnime();
     displayList(movies, 'movies-list');
-    displayList(tvShows, 'tvshows-list');
+    displayList(tvs, 'tvshows-list');
     displayList(anime, 'anime-list');
     renderHistory();
   }
