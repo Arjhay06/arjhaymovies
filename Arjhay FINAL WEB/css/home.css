@@ -9,7 +9,6 @@
   position: relative;
 }
 
-
 .remove-btn {
   background: #ff4d4f;
   border: none;
@@ -22,7 +21,6 @@
 .remove-btn:hover {
   background: #ff7875;
 }
-
 
 /* Make the episode list scrollable and hide pagination */
 .episode-selector .episode-list {
@@ -279,7 +277,6 @@ body {
   gap: 2rem;
 }
 
-/* in your home.css (or watch.css) */
 #modal-video {
   width: 100%;       /* span the full width of its wrapper */
   height: auto;      /* keep natural aspect ratio */
@@ -287,8 +284,6 @@ body {
   object-fit: cover; /* fill the box, cropping if necessary */
   background: black; /* fallback while loading */
 }
-
-
 
 .close {
   position: absolute;
@@ -398,7 +393,6 @@ body {
   pointer-events: none;
 }
 
-
 .episode-pagination {
   display: none;  /* hide pagination if not needed */
 }
@@ -469,6 +463,10 @@ footer {
   border: none;
 }
 
+.search-close:hover {
+  color: #ff5555;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -508,10 +506,6 @@ footer {
   z-index: 10;
 }
 
-.search-close:hover {
-  color: #ff5555;
-}
-
 .logo {
   font-size: 1.5rem;
   font-weight: bold;
@@ -533,65 +527,30 @@ footer {
   margin-left: 3px;
 }
 
-.episode-list button.active-episode {
-  background-color: #00ffcc;
-  color: #000;
-  font-weight: bold;
-  border-color: #00ffcc;
+.player-container, .controls { /* Wraps player and controls */
+  width: 90%;
+  max-width: 1200px;
+  margin: auto;
 }
 
-
-.active-episode {
-  background-color: #0ff;
-  color: #000;
-  font-weight: bold;
-}
-
-
-/* Wraps both player and controls */
 .watch-section {
   display: flex;
   flex-direction: column;
-  align-items: center;       /* centers children horizontally */
+  align-items: center;
   padding: 2rem;
   gap: 1.5rem;
 }
 
-/* Give them a max width and full-width up to it */
-.player-container,
-.controls {
-  width: 90%;
-  max-width: 1200px;
-}
-
-/* Center the controls’ items */
-.controls {
-  display: flex;
-  justify-content: center;   /* centers server/season/episode selectors */
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-
-
-/* force episode sidebar to match player height */
-/* ===== Adjust Episode Panel Width & Height ===== */
+/* Adjust Episode Panel Width & Height */
 .episode-selector {
-  /* remove forcing full-height */
-  flex: 0 0 300px;       /* fixed 300px width, no grow/shrink */
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
+  flex: 0 0 300px;
   padding: 1rem;
   background: #1f1f1f;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
-
-
-/* make only the inner list scrollable */
 .episode-selector #episode-list {
-  max-height: 360px;      /* your desired max height */
+  max-height: 360px;
   overflow-y: auto;
   border: 1px solid #333;
   border-radius: 6px;
@@ -599,25 +558,20 @@ footer {
   background: #111;
 }
 
-
-
-/* === Episode List Styling === */
 .control-panel.episode-selector {
   background: #1f1f1f;
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
-
 .control-panel.episode-selector #episode-list {
   background: #111;
   border: 1px solid #333;
   padding: 0.5rem;
   border-radius: 6px;
-  max-height: 300px;     /* adjust height as needed */
-  overflow-y: auto;      /* scroll when there are many episodes */
+  max-height: 300px;
+  overflow-y: auto;
 }
-
 .control-panel.episode-selector #episode-list button {
   width: 100%;
   text-align: left;
@@ -630,18 +584,13 @@ footer {
   cursor: pointer;
   transition: background 0.3s;
 }
-
 .control-panel.episode-selector #episode-list button:hover {
   background: rgba(0,255,204,0.2);
 }
-
 .control-panel.episode-selector #episode-list button.active-episode {
   background: #00ffcc;
   color: #000;
 }
-
-
-/* Add at the end of home.css */
 
 /* Grid layout for search results */
 .search-modal .results {
@@ -668,7 +617,6 @@ footer {
   color: #fff;
 }
 
-/* in home.css */
 .logo-link {
   text-decoration: none;
   color: inherit;
