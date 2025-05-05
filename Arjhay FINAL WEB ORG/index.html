@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arjhay TV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/home.css">
+  <script defer src="js/home.js"></script>
+
+  <script type="text/javascript" data-cfasync="false">
+/*<![CDATA[/* */
+(function(){var u=window,a="da98f7d16becffaa8ad8409026a88b14",i=[["siteId",337*900-684+4894401],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],v=["d3d3LmFudGlhZGJsb2Nrc3lzdGVtcy5jb20vZnNoYXZlLm1pbi5jc3M=","ZDNjb2Q4MHRobjdxbmQuY2xvdWRmcm9udC5uZXQvZFJSL3N2aXNpYmx5Lm1pbi5qcw==","d3d3LnB4ZHJvcWprcXcuY29tL3ZzaGF2ZS5taW4uY3Nz","d3d3LmZ6ZHVtZmZncC5jb20veHovcXZpc2libHkubWluLmpz"],c=-1,s,h,k=function(){clearTimeout(h);c++;if(v[c]&&!(1772208199000<(new Date).getTime()&&1<c)){s=u.document.createElement("script");s.type="text/javascript";s.async=!0;var g=u.document.getElementsByTagName("script")[0];s.src="https://"+atob(v[c]);s.crossOrigin="anonymous";s.onerror=k;s.onload=function(){clearTimeout(h);u[a.slice(0,16)+a.slice(0,16)]||k()};h=setTimeout(k,5E3);g.parentNode.insertBefore(s,g)}};if(!u[a]){try{Object.freeze(u[a]=i)}catch(e){}k()}})();
+/*]]>/* */
+</script>
+
+
+</head>
+<body>
+  <div class="main">
+    <div class="topbar">
+      <div class="logo">
+        <span class="logo-text">Arjhay<span class="small-tv">TV</span></span>
+      </div>
+      <div class="topbar-center">
+        <input type="text" class="search-bar" placeholder="Search Anime or Movie..." onfocus="openSearchModal()" />
+      </div>
+      <div class="topbar-links">
+        <a href="index.html">Home</a>
+        <a href="#">Contact</a>
+        <a href="#">Disclaimer</a>
+      </div>
+    </div>
+
+    <div class="slider" id="slider">
+      <div class="slides" id="slides"></div>
+      <button class="nav prev" onclick="prevSlide()">❮</button>
+      <button class="nav next" onclick="nextSlide()">❯</button>
+    </div>
+
+    <div class="row">
+      <h2>Trending Movies</h2>
+      <button class="nav prev" onclick="scrollList('movies-list', -1)">❮</button>
+      <div class="list" id="movies-list"></div>
+      <button class="nav next" onclick="scrollList('movies-list', 1)">❯</button>
+    </div>
+
+    <div class="row">
+      <h2>Trending TV Shows</h2>
+      <button class="nav prev" onclick="scrollList('tvshows-list', -1)">❮</button>
+      <div class="list" id="tvshows-list"></div>
+      <button class="nav next" onclick="scrollList('tvshows-list', 1)">❯</button>
+    </div>
+
+    <div class="row">
+      <h2>Trending Anime</h2>
+      <button class="nav prev" onclick="scrollList('anime-list', -1)">❮</button>
+      <div class="list" id="anime-list"></div>
+      <button class="nav next" onclick="scrollList('anime-list', 1)">❯</button>
+    </div>
+
+    <div class="row">
+      <h2>Watch History</h2>
+      <div class="list" id="history-list"></div>
+    </div>
+
+    <footer>
+      <p>&copy; 2025 Arjhay TV. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#">Created By: Arjhay</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Movie/Show Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div class="modal-body">
+        <!-- Left: Title, Rating, Description -->
+        <div style="flex: 1; min-width: 260px;">
+          <h2 id="modal-title" style="margin-bottom: 0.5rem;"></h2>
+          <div id="modal-rating" class="stars" style="margin-bottom: 0.5rem; color: gold;"></div>
+          <p id="modal-description" style="line-height: 1.6;"></p>
+        </div>
+      
+        <!-- Right: Player, Server, Season, Episodes -->
+        <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column;">
+          <!-- Video Player -->
+          <div style="background: linear-gradient(135deg, #1e1e1e, #111); padding: 1rem; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.1); margin-bottom: 1rem;">
+            <iframe id="modal-video" frameborder="0" allowfullscreen style="width: 100%; height: 480px; border-radius: 10px;"></iframe>
+          </div>
+
+          <!-- Server Selector -->
+          <div class="server-selector" style="margin-bottom: 1rem;">
+            <label for="server">Change Server:</label>
+            <select id="server" onchange="changeServer()">
+              <option value="vidsrc.cc">Vidsrc.cc (Anime/Movie)</option>
+              <option value="vidsrc.me">Vidsrc.me (Anime/Movie)</option>
+              <option value="player.videasy.net">Player.Videasy.net (Anime/Movie)</option>
+              <option value="2embed">2Embed (Anime/Movie)</option>
+              <option value="2anime.xyz">2Anime.xyz (Anime)</option>
+              <option value="multiembed.mov">MultiEmbed (Anime/Movie)</option>
+              <option value="apimocine-movie">ApiMocine (Movie)</option>
+              <option value="apimocine-tv">ApiMocine (TV)</option>
+            </select>
+          </div>
+
+          <!-- Season Selector -->
+          <div class="season-selector" id="season-selector" style="margin-bottom: 1rem; display: none;">
+            <label for="season-select">Select Season:</label>
+            <select id="season-select" onchange="selectSeason()"></select>
+          </div>
+
+          <!-- Episode List -->
+          <div class="episode-selector" id="episode-selector" style="display: none; flex: 1; overflow-y: auto;">
+            <h3>Episodes</h3>
+            <div id="episode-list" class="episode-list"></div>
+            <div id="episode-pagination" class="episode-pagination"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Moved OUTSIDE of modal -->
+  <div class="search-modal" id="search-modal">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
+      <button class="search-close" onclick="closeSearchModal()">×</button>
+    </div>
+    <div class="results" id="search-results"></div>
+  </div>
+</body>
+</html>
