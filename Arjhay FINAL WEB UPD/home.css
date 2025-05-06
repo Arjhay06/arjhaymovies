@@ -430,11 +430,21 @@ footer {
   height: 100vh;
   background: rgba(0, 0, 0, 0.8);
   display: none;
-  align-items: center;
-  justify-content: center;
+  align-items: center;         /* keep horizontal centering */
+  justify-content: flex-start; /* push content to the top */
   flex-direction: column;
   z-index: 9999;
+  padding-top: 1rem;           /* give room for close/search bar */
+  overflow-y: auto;            /* allow the whole modal to scroll */
 }
+
+ .search-modal .results {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  max-height: 80vh;             /* cap height so modal header stays visible */
+  overflow-y: auto;            /* let just the results scroll if too big */
+ }
+
 
 .search-modal input {
   width: 60%;
