@@ -674,3 +674,20 @@ footer {
   color: inherit;
   cursor: pointer;
 }
+
+
+/* at the very end of home.css */
+@media (max-width: 768px) {
+  /* shrink your spotlight/banner */
+  #slider, 
+  .slider-section {
+    height: 200px;           /* or whatever max you prefer */
+    max-height: 200px;
+  }
+  /* ensure slides scale down nicely */
+  .slider-section img,
+  .slider-section iframe {
+    height: 100%;
+    object-fit: cover;
+  }
+}
