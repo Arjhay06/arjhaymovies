@@ -279,7 +279,14 @@ body {
   gap: 2rem;
 }
 
-
+/* in your home.css (or watch.css) */
+#modal-video {
+  width: 100%;       /* span the full width of its wrapper */
+  height: auto;      /* keep natural aspect ratio */
+  max-height: 80vh;  /* optional—don’t exceed 80% of viewport height */
+  object-fit: cover; /* fill the box, cropping if necessary */
+  background: black; /* fallback while loading */
+}
 
 
 
@@ -550,12 +557,12 @@ footer {
   gap: 1.5rem;
 }
 
- Constrain only the controls panel */
- .controls {
-   width: 90%;
-   max-width: 1200px;
-   margin: 0 auto;
- }
+/* Give them a max width and full-width up to it */
+.player-container,
+.controls {
+  width: 90%;
+  max-width: 1200px;
+}
 
 /* Center the controls’ items */
 .controls {
@@ -667,49 +674,3 @@ footer {
   color: inherit;
   cursor: pointer;
 }
-
-
-/* at the very end of home.css */
-@media (max-width: 768px) {
-  /* shrink your spotlight/banner */
-  #slider, 
-  .slider-section {
-    height: 200px;           /* or whatever max you prefer */
-    max-height: 200px;
-  }
-  /* ensure slides scale down nicely */
-  .slider-section img,
-  .slider-section iframe {
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-
-/* —— Always maintain 16:9 aspect for your player —— */
-.player-container {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%;       /* 16:9 ratio */
-  background: linear-gradient(135deg, #1e1e1e, #111);
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0,255,204,0.1);
-  overflow: hidden;
-}
-
-
-/* —— Shrink banner on phones —— */
-@media (max-width: 768px) {
-  /* adjust your slider/banner */
-  #slider,
-  .slider-section {
-    height: 200px;
-    max-height: 200px;
-  }
-  .slider-section img,
-  .slider-section iframe {
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
