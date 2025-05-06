@@ -430,11 +430,10 @@ footer {
   height: 100vh;
   background: rgba(0, 0, 0, 0.8);
   display: none;
-  align-items: center;         /* keep horizontal centering */
-  justify-content: flex-start; /* push content to the top */
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
   z-index: 9999;
-  padding-top: 1rem;           /* give room for close/search bar */
   overflow-y: auto;            /* allow the whole modal to scroll */
 }
 
