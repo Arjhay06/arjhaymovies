@@ -557,12 +557,12 @@ footer {
   gap: 1.5rem;
 }
 
-/* Give them a max width and full-width up to it */
-.player-container,
-.controls {
-  width: 90%;
-  max-width: 1200px;
-}
+ Constrain only the controls panel */
+ .controls {
+   width: 90%;
+   max-width: 1200px;
+   margin: 0 auto;
+ }
 
 /* Center the controls’ items */
 .controls {
@@ -691,3 +691,38 @@ footer {
     object-fit: cover;
   }
 }
+
+
+/* —— Always maintain 16:9 aspect for your player —— */
+.player-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;       /* 16:9 ratio */
+  background: linear-gradient(135deg, #1e1e1e, #111);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,255,204,0.1);
+  overflow: hidden;
+}
+.player-container iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+/* —— Shrink banner on phones —— */
+@media (max-width: 768px) {
+  /* adjust your slider/banner */
+  #slider,
+  .slider-section {
+    height: 200px;
+    max-height: 200px;
+  }
+  .slider-section img,
+  .slider-section iframe {
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
