@@ -35,15 +35,16 @@
     <section class="watch-section" style="flex:1; padding:2rem; display:flex; flex-direction:column; gap:1.5rem;">
 
       <!-- Video Player -->
-      <div class="player-container" style="background: linear-gradient(135deg, #1e1e1e, #111); padding:1rem; border-radius:12px; box-shadow:0 0 20px rgba(0,255,204,0.1);">
-        <iframe
-  id="modal-video"
-  frameborder="0"
-  allow="autoplay; fullscreen; encrypted-media"
-  allowfullscreen
-  style="width:100%; height:480px; border-radius:10px;"
-></iframe>
-      </div>
+      <div class="player-container">
+  <iframe
+    id="modal-video"
+    frameborder="0"
+    allow="autoplay; fullscreen; encrypted-media"
+    allowfullscreen
+    webkitallowfullscreen
+    mozallowfullscreen>
+  </iframe>
+</div>
 
       <!-- Controls: Server, Season, Episodes -->
       <div class="controls" style="display:flex; gap:1rem; align-items:flex-start; justify-content:center; flex-wrap:wrap;">
