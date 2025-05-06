@@ -19,7 +19,8 @@ function truncateTitle(str, maxLength = 25) {
 
 // Detect watch page
 function isWatchPage() {
-  return window.location.pathname.endsWith('watch.html');
+  const page = window.location.pathname.split('/').pop();
+  return page === 'watch.html' || page === 'watch';
 }
 
 // Open search modal
