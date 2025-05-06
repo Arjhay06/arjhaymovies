@@ -359,4 +359,48 @@ function renderHistory() {
   });
 }
 
+
+// Fullscreen + auto‐landscape on mobile
+window.addEventListener('DOMContentLoaded', () => {
+  const container = document.querySelector('.player-container');
+  if (!container) return;
+
+  const fsBtn = document.createElement('button');
+  fsBtn.textContent = '⛶';
+  Object.assign(fsBtn.style, {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    zIndex: '10001',
+    padding: '0.5rem',
+    background: '#0008',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer'
+  });
+  container.appendChild(fsBtn);
+
+  fsBtn.addEventListener('click', async () => {
+    try {
+      const el = container;
+      if (el.requestFullscreen) await el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      else if (el.mozRequestFullScreen) await el.mozRequestFullScreen();
+
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch (err) {
+      console.warn('Fullscreen/orientation lock failed:', err);
+    }
+  });
+
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+  });
+});
+
 init();
