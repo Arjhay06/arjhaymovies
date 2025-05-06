@@ -85,6 +85,32 @@ async function init() {
       await displayEpisodes(currentItem);
     }
     changeServer();
+    // 1. Define your ordered list of servers
+const SERVER_LIST = [
+  'vidsrc.cc',
+  'vidsrc.me',
+  'player.videasy.net',
+  '2embed',
+  '2anime.xyz',
+  'multiembed.mov',
+  'apimocine-movie',
+  'apimocine-tv'
+];
+
+// 2. Hook into the iframe’s error event
+const videoEl = document.getElementById('modal-video');
+videoEl.addEventListener('error', () => {
+  // find current server index
+  const select = document.getElementById('server');
+  const current = SERVER_LIST.indexOf(select.value);
+  // pick next, wrapping around
+  const next = (current + 1) % SERVER_LIST.length;
+  select.value = SERVER_LIST[next];
+  // re-run your changeServer logic
+  changeServer();
+  console.log(`Server failed, switched to ${SERVER_LIST[next]}`);
+});
+
   } else {
     await setupSlider();
     const movies = await fetchTrending('movie');
@@ -358,49 +384,5 @@ function renderHistory() {
     container.appendChild(wrapper);
   });
 }
-
-
-// Fullscreen + auto‐landscape on mobile
-window.addEventListener('DOMContentLoaded', () => {
-  const container = document.querySelector('.player-container');
-  if (!container) return;
-
-  const fsBtn = document.createElement('button');
-  fsBtn.textContent = '⛶';
-  Object.assign(fsBtn.style, {
-    position: 'absolute',
-    top: '10px',
-    right: '10px',
-    zIndex: '10001',
-    padding: '0.5rem',
-    background: '#0008',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-  });
-  container.appendChild(fsBtn);
-
-  fsBtn.addEventListener('click', async () => {
-    try {
-      const el = container;
-      if (el.requestFullscreen) await el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-      else if (el.mozRequestFullScreen) await el.mozRequestFullScreen();
-
-      if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('landscape');
-      }
-    } catch (err) {
-      console.warn('Fullscreen/orientation lock failed:', err);
-    }
-  });
-
-  document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && screen.orientation && screen.orientation.unlock) {
-      screen.orientation.unlock();
-    }
-  });
-});
 
 init();
