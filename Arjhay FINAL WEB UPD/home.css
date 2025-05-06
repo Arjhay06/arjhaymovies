@@ -279,14 +279,7 @@ body {
   gap: 2rem;
 }
 
-/* in your home.css (or watch.css) */
-#modal-video {
-  width: 100%;       /* span the full width of its wrapper */
-  height: auto;      /* keep natural aspect ratio */
-  max-height: 80;  /* optional—don’t exceed 80% of viewport height */
-  object-fit: cover; /* fill the box, cropping if necessary */
-  background: black; /* fallback while loading */
-}
+
 
 
 
