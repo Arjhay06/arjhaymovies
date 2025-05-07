@@ -9,6 +9,56 @@
   position: relative;
 }
 
+/* ← Add this at the end of home.css → */
+
+/* Style & layer the slider arrows */
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  z-index: 5;          /* make sure it's above the ::before overlay */
+  padding: 0.5rem 1rem;
+  border-radius: 50%;
+}
+
+.arrow.prev {
+  left: 10px;
+}
+
+.arrow.next {
+  right: 10px;
+}
+
+
+
+
+/* Slider arrows on top of gradient overlay */
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  z-index: 3;          /* raised above the ::before overlay */
+  padding: 0.5rem 1rem;
+  border-radius: 50%;
+}
+
+.nav.prev {
+  left: 10px;
+}
+
+.nav.next {
+  right: 10px;
+}
 
 .remove-btn {
   background: #ff4d4f;
@@ -241,11 +291,7 @@ body {
   cursor: pointer;
 }
 
-.list img:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 12px #00ffcc44;
-  z-index: 2;
-}
+
 
 .modal {
   position: fixed;
@@ -425,8 +471,6 @@ footer {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;        
-  overflow-y: auto; 
   height: 100vh;
   background: rgba(0, 0, 0, 0.8);
   display: none;
@@ -434,10 +478,7 @@ footer {
   justify-content: center;
   flex-direction: column;
   z-index: 9999;
-  overflow-y: auto;            /* allow the whole modal to scroll */
 }
-
-
 
 .search-modal input {
   width: 60%;
@@ -681,3 +722,157 @@ footer {
   color: inherit;
   cursor: pointer;
 }
+
+
+
+/* Netflix-style gradient on the slider */
+.slider {
+  position: relative; /* ensure the pseudo-element layers correctly */
+}
+.slider::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 30%;  /* how far the fade reaches */
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(0,0,0,0.85) 0%,
+    rgba(0,0,0,0)    100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Stronger hover effect on each poster */
+.list img:hover {
+  transform: scale(1.08);
+  filter: brightness(1.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+
+
+/* global Netflix-dark background */
+body {
+  background-color: #141414;
+  background-image: linear-gradient(to bottom, #141414, #000);
+}
+
+/* subtle vertical gradient depth layer */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(20,20,20,0.85) 0%,
+    rgba(0,0,0,0.9)   100%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* slider gradient overlay (if you haven’t yet) */
+.slider {
+  position: relative;
+  overflow: hidden;
+}
+.slider::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(0,0,0,0.85) 0%,
+    rgba(0,0,0,0)    100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* poster hover punch */
+.list img:hover {
+  transform: scale(1.08);
+  filter: brightness(1.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+
+
+
+/* ───── Netflix-style Poster Cards ───── */
+.poster-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform .3s;
+}
+.poster-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: transform .3s ease, filter .3s ease;
+}
+
+/* top & bottom badge bars */
+.poster-badges {
+  position: absolute;
+  left: 0; right: 0;
+  padding: 0.4rem;
+  display: flex;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+.poster-badges.top { top: 0; justify-content: flex-start; }
+.poster-badges.bottom {
+  bottom: 0;
+  justify-content: flex-start;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+}
+
+/* individual badge styles */
+.poster-badges .badge {
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.poster-badges .badge.small {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+}
+
+/* title underneath */
+.poster-title {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #eee;
+  text-align: left;
+}
+
+/* hover & active state */
+.poster-card:hover,
+.poster-card.active {
+  transform: scale(1.06);
+  z-index: 2;
+}
+.poster-card:hover img,
+.poster-card.active img {
+  filter: brightness(1.2);
+  transform: scale(1.08);
+}
+
+/* optional “selected” border */
+.poster-card.active {
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.8);
+}
+
+
