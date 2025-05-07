@@ -60,6 +60,15 @@ function addToHistory(item) {
   renderHistory();
 }
 
+// Scroll the given list container by one "page" width
+function scrollList(containerId, direction) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const scrollAmount = container.clientWidth;
+  container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+}
+window.scrollList = scrollList;
+
 // Initialize on page load
 async function init() {
   window.openSearchModal = openSearchModal;
@@ -84,33 +93,32 @@ async function init() {
       await loadSeasons(currentItem);
       await displayEpisodes(currentItem);
     }
-    changeServer();
-    // 1. Define your ordered list of servers
-const SERVER_LIST = [
-  'vidsrc.cc',
-  'vidsrc.me',
-  'player.videasy.net',
-  '2embed',
-  '2anime.xyz',
-  'multiembed.mov',
-  'apimocine-movie',
-  'apimocine-tv'
-];
 
-// 2. Hook into the iframe’s error event
-const videoEl = document.getElementById('modal-video');
-videoEl.addEventListener('error', () => {
-  // find current server index
-  const select = document.getElementById('server');
-  const current = SERVER_LIST.indexOf(select.value);
-  // pick next, wrapping around
-  const next = (current + 1) % SERVER_LIST.length;
-  select.value = SERVER_LIST[next];
-  // re-run your changeServer logic
-  changeServer();
-  console.log(`Server failed, switched to ${SERVER_LIST[next]}`);
-});
+    // Build embed URL
+    await changeServer();
 
+    // Server fallback list
+    const SERVER_LIST = [
+      'vidsrc.cc',
+      'vidsrc.net',
+      'player.videasy.net',
+      '2embed',
+      '2anime.xyz',
+      'multiembed.mov',
+      'apimocine-movie',
+      'apimocine-tv',
+      'moviesapi.club'
+    ];
+
+    const videoEl = document.getElementById('modal-video');
+    videoEl.addEventListener('error', () => {
+      const select = document.getElementById('server');
+      const current = SERVER_LIST.indexOf(select.value);
+      const next = (current + 1) % SERVER_LIST.length;
+      select.value = SERVER_LIST[next];
+      changeServer();
+      console.log(`Server failed, switched to ${SERVER_LIST[next]}`);
+    });
   } else {
     await setupSlider();
     const movies = await fetchTrending('movie');
@@ -123,6 +131,8 @@ videoEl.addEventListener('error', () => {
   }
 }
 
+
+
 // Fetch trending data
 async function fetchTrending(type) {
   const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
@@ -131,9 +141,13 @@ async function fetchTrending(type) {
 
 async function fetchTrendingAnime() {
   let all = [];
-  for (let page = 1; page <= 3; page++) {
-    const data = await (await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`)).json();
-    all = all.concat(data.results.filter(i => i.original_language === 'ja' && i.genre_ids.includes(16)));
+  for (let page = 1; page <= 7; page++) {
+    const data = await (await fetch(
+      `${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`
+    )).json();
+    all = all.concat(
+      data.results.filter(i => i.original_language === 'ja' && i.genre_ids.includes(16))
+    );
   }
   return all;
 }
@@ -165,12 +179,16 @@ function displayList(items, containerId) {
   });
 }
 
+
+
 // Slider setup
 async function setupSlider() {
   const movies = await fetchTrending('movie');
   slideItems = await Promise.all(
     movies.slice(0, 5).map(async item => {
-      const full = await (await fetch(`${BASE_URL}/movie/${item.id}?api_key=${API_KEY}`)).json();
+      const full = await (await fetch(
+        `${BASE_URL}/movie/${item.id}?api_key=${API_KEY}`
+      )).json();
       return { ...item, runtime: full.runtime, media_type: 'movie' };
     })
   );
@@ -182,7 +200,9 @@ async function setupSlider() {
     div.style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
     div.innerHTML = `
       <div class="slide-overlay">
-        <div class="meta">🎬 ${item.media_type} • ⭐ ${Math.round(item.vote_average)} • 🕒 ${item.runtime} mins</div>
+        <div class="meta">🎬 ${item.media_type} • ⭐ ${Math.round(
+      item.vote_average
+    )} • 🕒 ${item.runtime} mins</div>
         <h1>${truncateTitle(item.title, 30)}</h1>
         <p>${item.overview?.slice(0, 160)}...</p>
         <div class="buttons">
@@ -220,8 +240,9 @@ function prevSlide() {
 // Change server embed URL
 function changeServer() {
   const server = document.getElementById('server').value;
-  const type = currentItem.media_type === 'movie' ? 'movie' : 'tv';
+  const type   = currentItem.media_type === 'movie' ? 'movie' : 'tv';
   let embedURL = '';
+
   switch (server) {
     case 'vidsrc.cc':
       embedURL = currentItem.episode
@@ -229,41 +250,60 @@ function changeServer() {
         : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
       break;
 
-    case 'vidsrc.me':
-      embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
+    case 'vidsrc.in':
+      embedURL = currentItem.episode
+        ? `https:/vidsrc.in/embed/tv/${currentItem.id}/${currentItem.season}-${currentItem.episode}`
+        : `https://vidsrc.in/embed/movie/${currentItem.id}`;
+      
       break;
 
-    case 'player.videasy.net':
-      embedURL = `https://player.videasy.net/${type}/${currentItem.id}`;
-      break;
+      case 'player.videasy.net':
+        embedURL = `https://player.videasy.net/movie/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+           
+    
 
     case '2embed':
-      embedURL = `https://2embed.cc/embed${type === 'movie' ? '' : 'tv'}/${currentItem.id}`;
+      embedURL = embedURL = currentItem.episode
+      ?`https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`
+      : `https://www.2embed.cc/embed/${currentItem.id}`;
+       
       break;
 
-    case '2anime.xyz': {
-      const raw = currentItem.title || currentItem.name || '';
-      const slug = raw
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-');
-      const epNum = currentItem.episode || 1;
-      embedURL = `https://2anime.xyz/embed/${slug}-episode-${epNum}`;
+      case '2Anime': {
+        // 1. Build a clean slug from the title/name
+        let slug = (currentItem.title || currentItem.name || '')
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')   // strip punctuation
+          .trim()
+          .replace(/\s+/g, '-');      // spaces → hyphens
+      
+        // 3. Which episode?
+        const ep = currentItem.episode || 1;
+      
+        // 4. Build the final URL
+        embedURL = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
+        break;
+      }
+
+    case 'moviesapi.club':
+      embedURL = `https://moviesapi.club/${type}/${currentItem.id}-${currentItem.season}-${currentItem.episode}`;
+      embedURL = `https://moviesapi.club/${type}/${currentItem.id}`;
       break;
-    }
 
     case 'multiembed.mov':
-      embedURL = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1`;
+      embedURL = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1${currentItem.episode ? `&s=${currentItem.season}&e=${currentItem.episode}` : ''}`;
       break;
 
-    case 'apimocine-movie':
-      embedURL = `https://apimocine.vercel.app/movie/${currentItem.id}`;
+    case 'apimocine tv':
+      embedURL = `https://apimocine.vercel.app/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      
       break;
 
-    case 'apimocine-tv':
-      embedURL = `https://apimocine.vercel.app/tv/${currentItem.id}`;
-      break;
+      case 'apimocine movie':
+        embedURL = `https://apimocine.vercel.app/${type}/${currentItem.id}`;
+        
+        break;  
+  
 
     default:
       embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
@@ -294,16 +334,13 @@ async function loadSeasons(item) {
 }
 
 async function displayEpisodes(item) {
-  const list = document.getElementById('episode-list');
+  const list      = document.getElementById('episode-list');
   const seasonNum = item.season || parseInt(document.getElementById('season-select').value);
-  const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNum}?api_key=${API_KEY}`);
-  const data = await res.json();
-  const eps = data.episodes || [];
+  const res       = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNum}?api_key=${API_KEY}`);
+  const data      = await res.json();
+  const eps       = data.episodes || [];
 
-  list.innerHTML = '';
-  const pagination = document.getElementById('episode-pagination');
-  if (pagination) pagination.style.display = 'none';
-
+  list.innerHTML    = '';
   list.style.maxHeight = '400px';
   list.style.overflowY = 'auto';
 
@@ -339,8 +376,8 @@ async function searchTMDB() {
     const wrapper = document.createElement('div');
     wrapper.className = 'search-result-item';
     const img = document.createElement('img');
-    img.src = `${IMG_URL}${item.poster_path}`;
-    img.alt = item.title || item.name;
+    img.src    = `${IMG_URL}${item.poster_path}`;
+    img.alt    = item.title || item.name;
     img.onclick = () => {
       const p = new URLSearchParams({ id: item.id, media_type: item.media_type, title: item.title || item.name || '', poster: item.poster_path });
       window.location.href = `watch.html?${p}`;
@@ -363,15 +400,15 @@ function renderHistory() {
     const wrapper = document.createElement('div');
     wrapper.className = 'history-item';
     const img = document.createElement('img');
-    img.src = `${IMG_URL}${item.poster_path}`;
-    img.alt = item.title;
+    img.src    = `${IMG_URL}${item.poster_path}`;
+    img.alt    = item.title;
     img.onclick = () => {
       const p = new URLSearchParams({ id: item.id, media_type: item.media_type, title: item.title, poster: item.poster_path, season: item.season || '', episode: item.episode || '' });
       window.location.href = `watch.html?${p}`;
     };
     const btn = document.createElement('button');
     btn.textContent = '✕';
-    btn.className = 'remove-btn';
+    btn.className   = 'remove-btn';
     btn.onclick = e => {
       e.stopPropagation();
       let hist = JSON.parse(localStorage.getItem('watchHistory')) || [];
