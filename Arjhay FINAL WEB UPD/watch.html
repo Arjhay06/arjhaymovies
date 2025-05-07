@@ -36,15 +36,16 @@
 
       <!-- Video Player -->
       <div class="player-container">
- <iframe
-  id="modal-video"
-  frameborder="0"
-  allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
-  allowfullscreen
-  webkitallowfullscreen
-  mozallowfullscreen
-  style="width:100%; height:480px; border-radius:10px;"
-></iframe>
+  <iframe
+   id="modal-video"
+   frameborder="0"
+   allow="autoplay; fullscreen; encrypted-media"
+   allowfullscreen
+   webkitallowfullscreen
+   mozallowfullscreen
+   allow="fullscreen"
+   style="width:100%; height:480px; border-radius:10px;"
+ ></iframe>
 </div>
 
       <!-- Controls: Server, Season, Episodes -->
@@ -55,13 +56,14 @@
           <label for="server" style="color:#ddd; display:block; margin-bottom:0.5rem;">Change Server:</label>
           <select id="server" onchange="changeServer()" style="width:100%; padding:0.5rem; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #444;">
             <option value="vidsrc.cc">Vidsrc.cc (Anime/Movie)</option>
-            <option value="vidsrc.me">Vidsrc.me (Anime/Movie)</option>
+            <option value="vidsrc.in">Vidsrc.in (Anime/Movie)</option>
             <option value="player.videasy.net">Player.Videasy.net (Anime/Movie)</option>
-            <option value="2embed">2Embed (Anime/Movie)</option>
-            <option value="2anime.xyz">2Anime.xyz (Anime)</option>
+            <option value="2embed">2Embed (TV/Movie)</option>
+            <option value="2Anime">2Anime (Anime)</option>
+            <option value="moviesapi.club">MoviesAPI Club (Anime/Movie)</option>
             <option value="multiembed.mov">MultiEmbed (Anime/Movie)</option>
-            <option value="apimocine-movie">ApiMocine (Movie)</option>
-            <option value="apimocine-tv">ApiMocine (TV)</option>
+            <option value="apimocine tv">ApiMocine (TV/Anime)</option>
+            <option value="apimocine movie">ApiMocine (Movie)</option>
           </select>
         </div>
 
