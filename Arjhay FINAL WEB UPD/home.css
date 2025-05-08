@@ -5,6 +5,21 @@
   box-sizing: border-box;
 }
 
+
+/* ── Completely remove curves from all poster cards ── */
+.card {
+  border-radius: 0 !important;
+  overflow: hidden;           /* keep the image cropped to the rect */
+}
+
+.card img {
+  border-radius: 0 !important;
+}
+
+.card:hover {
+  border-radius: 0 !important;  /* ensure hover doesn’t re-add rounding */
+}
+
 .history-item {
   position: relative;
 }
@@ -331,7 +346,7 @@ body {
   height: auto;      /* keep natural aspect ratio */
   max-height: 80vh;  /* optional—don’t exceed 80% of viewport height */
   object-fit: cover; /* fill the box, cropping if necessary */
-  background: black; /* fallback while loading */
+  
 }
 
 
@@ -876,3 +891,198 @@ body::before {
 }
 
 
+/* Make the player span edge-to-edge */
+.watch-section .player-container {
+  width: 50% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove any fallback fill behind the iframe */
+.watch-section .player-container iframe {
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+
+
+/* ── Poster-card styles ───────────────────────────────── */
+.list .card {
+  position: relative;
+  flex: 0 0 160px;               /* fixed width per card */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: transform 0.3s;
+}
+.list .card:hover {
+  transform: scale(1.05);
+}
+.list .card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* common badge styles */
+.list .card .badge {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 3px 6px;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  z-index: 1;
+}
+
+/* top-left “HD” badge */
+.list .card .quality {
+  top: 8px;
+  left: 8px;
+}
+
+/* bottom-left “Movie · Year” badge */
+.list .card .info {
+  bottom: 8px;
+  left: 8px;
+}
+
+/* bottom gradient + title */
+.list .card .title-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 10px;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  font-size: 0.9rem;
+  z-index: 1;
+}
+
+
+
+
+/* ── Search-results as flex list ───────────────────────────────── */
+#search-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+/* force each search card to the same width as your slider cards */
+#search-results .card {
+  flex: 0 0 160px; /* match .list .card */
+}
+
+/* make sure the poster itself fills that box */
+#search-results .card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+
+
+/* ── Enforce a uniform rectangle shape on all poster cards ── */
+.list .card,
+#search-results .card {
+  /* 2:3 poster ratio – tweak if you prefer 3:4 or 16:9 */
+  aspect-ratio: 2 / 3;
+  /* ensure flex sizing still applies */
+  flex: 0 0 160px;
+  border-radius: 0 !important;
+  overflow: hidden;
+}
+
+/* let the image fill that box and crop any overflow */
+.list .card img,
+#search-results .card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+#history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+
+/* remove the 80vh cap so fullscreen can expand */
+#modal-video {
+  max-height: none !important;
+}
+
+/* ── Force true full-screen for modal-video ───────────────────────── */
+#modal-video:fullscreen,
+#modal-video:-webkit-full-screen,
+#modal-video:-moz-full-screen,
+#modal-video:-ms-fullscreen {
+  position: fixed !important;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  z-index: 9999;
+}
+
+
+
+
+
+/* Style & layer the slider arrows */
+.arrow {
+  position: absolute;
+  /* ... rest of existing arrow styles ... */
+  z-index: 2;
+}
+.poster-card:hover img,
+.poster-card.active img {
+  filter: brightness(1.2);
+  transform: scale(1.08);
+}
+
+/* optional “selected” border */
+.poster-card.active {
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.8);
+}
+
+/* Remove any existing border-radius on cards if needed */
+.card {
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/* Ensure images cover their card containers */
+.card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Style for remove button inside history cards */
+.history-item .remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.history-item .remove-btn:hover {
+  background: #ff7875;
+}
