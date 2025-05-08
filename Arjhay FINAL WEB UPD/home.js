@@ -23,56 +23,49 @@ function isWatchPage() {
   return page === 'watch.html' || page === 'watch';
 }
 
-// Open search modal
+// Open/Close search modal
 function openSearchModal() {
-  const modal = document.getElementById('search-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
-  const input = document.getElementById('search-input');
-  input.value = '';
+  const m = document.getElementById('search-modal');
+  if (!m) return;
+  m.style.display = 'flex';
+  document.getElementById('search-input').value = '';
   document.getElementById('search-results').innerHTML = '';
-  input.focus();
+  document.getElementById('search-input').focus();
 }
-
-// Close search modal
 function closeSearchModal() {
-  const modal = document.getElementById('search-modal');
-  if (!modal) return;
-  modal.style.display = 'none';
+  const m = document.getElementById('search-modal');
+  if (!m) return;
+  m.style.display = 'none';
   document.getElementById('search-results').innerHTML = '';
 }
 
-// Add or update watch history
+// Persist watch history
 function addToHistory(item) {
   const entry = {
-    id:         item.id,
-    title:      item.title || item.name || '',
-    poster_path:item.poster_path || item.poster || '',
+    id: item.id,
+    title: item.title || item.name || '',
+    poster_path: item.poster_path || item.poster || '',
     media_type: item.media_type,
-    season:     item.season   || null,
-    episode:    item.episode  || null,
-    server:     document.getElementById('server')
-                  ? document.getElementById('server').value
-                  : null
+    season: item.season || null,
+    episode: item.episode || null,
+    server: document.getElementById('server').value
   };
   let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
   history = history.filter(i => i.id !== entry.id);
   history.unshift(entry);
-  history = history.slice(0, 20);
-  localStorage.setItem('watchHistory', JSON.stringify(history));
+  localStorage.setItem('watchHistory', JSON.stringify(history.slice(0, 20)));
   renderHistory();
 }
 
-// Scroll the given list container by one "page" width
+// Horizontal scroll
 function scrollList(containerId, direction) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const scrollAmount = container.clientWidth;
-  container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.scrollBy({ left: direction * c.clientWidth, behavior: 'smooth' });
 }
 window.scrollList = scrollList;
 
-// Initialize on page load
+// Init on load
 async function init() {
   window.openSearchModal = openSearchModal;
   window.closeSearchModal = closeSearchModal;
@@ -82,51 +75,45 @@ async function init() {
 
   if (isWatchPage()) {
     const params = new URLSearchParams(window.location.search);
+    const urlServer = params.get('server');
+    const savedServer = localStorage.getItem('lastServer');
+    const sel = document.getElementById('server');
+
+    // restore dropdown from URL or saved
+    if (urlServer) sel.value = urlServer;
+    else if (savedServer) sel.value = savedServer;
+
+    // attach listener for manual changes
+    sel.addEventListener('change', () => {
+      localStorage.setItem('lastServer', sel.value);
+      changeServer();
+      // update history entry with new server
+      currentItem.server = sel.value;
+      addToHistory(currentItem);
+    });
+
     const id = parseInt(params.get('id'));
     const media_type = params.get('media_type');
     const title = params.get('title');
     const poster = params.get('poster');
     const season = params.get('season') ? parseInt(params.get('season')) : null;
     const episode = params.get('episode') ? parseInt(params.get('episode')) : null;
-    const selectedServer = params.get('server');
 
     currentItem = { id, media_type, title, poster_path: poster, season, episode };
-    // if history server exists, set dropdown
-    if (selectedServer) {
-      const sel = document.getElementById('server');
-      if (sel) sel.value = selectedServer;
-    }
     addToHistory(currentItem);
 
     if (media_type === 'tv') {
       await loadSeasons(currentItem);
       await displayEpisodes(currentItem);
     }
-
-    // Build embed URL
-    await changeServer();
-
-    // Server fallback list
-    const SERVER_LIST = [
-      'vidsrc.cc',
-      'vidsrc.net',
-      'player.videasy.net',
-      '2embed',
-      '2anime.xyz',
-      'multiembed.mov',
-      'apimocine-movie',
-      'apimocine-tv',
-      'moviesapi.club'
-    ];
+    changeServer();
 
     const videoEl = document.getElementById('modal-video');
     videoEl.addEventListener('error', () => {
-      const select = document.getElementById('server');
-      const current = SERVER_LIST.indexOf(select.value);
-      const next = (current + 1) % SERVER_LIST.length;
-      select.value = SERVER_LIST[next];
+      const servers = Array.from(sel.options).map(o => o.value);
+      const idx = servers.indexOf(sel.value);
+      sel.value = servers[(idx + 1) % servers.length];
       changeServer();
-      console.log(`Server failed, switched to ${SERVER_LIST[next]}`);
     });
   } else {
     await setupSlider();
@@ -140,13 +127,11 @@ async function init() {
   }
 }
 
-
-// Fetch trending data
+// Fetch trending
 async function fetchTrending(type) {
   const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
   return (await res.json()).results;
 }
-
 async function fetchTrendingAnime() {
   let all = [];
   for (let page = 1; page <= 7; page++) {
@@ -160,51 +145,53 @@ async function fetchTrendingAnime() {
   return all;
 }
 
+// Display list
 function displayList(items, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
-
   items.forEach(item => {
     if (!item.poster_path) return;
-    if (!item.media_type) 
-      item.media_type = containerId.includes('tv') ? 'tv' : 'movie';
+    if (!item.media_type) item.media_type = containerId.includes('tv') ? 'tv' : 'movie';
 
-    // ── build card
+    const serverValue =
+      document.getElementById('server').value ||
+      localStorage.getItem('lastServer') ||
+      'vidsrc.cc';
+
     const card = document.createElement('div');
     card.classList.add('card');
 
-    // poster image
     const img = document.createElement('img');
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name;
-    img.classList.add('fade-in');
     img.style.cursor = 'pointer';
     img.onclick = () => {
       const p = new URLSearchParams({
-        id:         item.id,
+        id: item.id,
         media_type: item.media_type,
-        title:      item.title  || item.name  || '',
-        poster:     item.poster_path,
-        season:     item.season  || '',
-        episode:    item.episode || '',
-        server:     document.getElementById('server').value
+        title: item.title || item.name || '',
+        poster: item.poster_path,
+        season: item.season || '',
+        episode: item.episode || '',
+        server: serverValue
       });
       window.location.href = `watch.html?${p}`;
     };
     card.appendChild(img);
 
-    // ── HD badge (always show; tweak logic if you only want it for high-rated)
     const hd = document.createElement('span');
-    hd.classList.add('badge','quality');
+    hd.classList.add('badge', 'quality');
     hd.innerText = 'HD';
     card.appendChild(hd);
 
-    // ── type & year badge
     const info = document.createElement('span');
-    info.classList.add('badge','info');
-   
+    info.classList.add('badge', 'info');
+    const dt = item.release_date || item.first_air_date || '';
+    const yr = dt ? new Date(dt).getFullYear() : '';
+    const lbl = item.media_type === 'tv' ? 'TV' : 'Movie';
+    info.innerText = yr ? `${lbl} · ${yr}` : lbl;
+    card.appendChild(info);
 
-    // ── title overlay
     const titleOv = document.createElement('div');
     titleOv.classList.add('title-overlay');
     titleOv.innerText = truncateTitle(item.title || item.name, 30);
@@ -218,55 +205,34 @@ function displayList(items, containerId) {
 async function setupSlider() {
   const movies = await fetchTrending('movie');
   slideItems = await Promise.all(
-    movies.slice(0, 5).map(async item => {
-      const full = await (await fetch(
-        `${BASE_URL}/movie/${item.id}?api_key=${API_KEY}`
-      )).json();
-      return { ...item, runtime: full.runtime, media_type: 'movie' };
+    movies.slice(0, 5).map(async it => {
+      const full = await (await fetch(`${BASE_URL}/movie/${it.id}?api_key=${API_KEY}`)).json();
+      return { ...it, runtime: full.runtime, media_type: 'movie' };
     })
   );
-  const slides = document.getElementById('slides');
-  slides.innerHTML = '';
-  slideItems.forEach((item, idx) => {
+  const slides = document.getElementById('slides'); slides.innerHTML = '';
+  slideItems.forEach((it, idx) => {
     const div = document.createElement('div');
     div.className = 'slide';
-    div.style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
-    div.innerHTML = `
-      <div class="slide-overlay">
-        <div class="meta">🎬 ${item.media_type} • ⭐ ${Math.round(
-        item.vote_average
-      )} • 🕒 ${item.runtime} mins</div>
-        <h1>${truncateTitle(item.title, 30)}</h1>
-        <p>${item.overview?.slice(0, 160)}...</p>
-        <div class="buttons">
-          <button onclick="redirectFromSlider(${idx})">DETAILS</button>
-          <button onclick="redirectFromSlider(${idx})">WATCH NOW</button>
-        </div>
-      </div>`;
+    div.style.backgroundImage = `url(${IMG_URL}${it.backdrop_path})`;
+    div.innerHTML = `<div class="slide-overlay"><h1>${truncateTitle(it.title, 30)}</h1><div class="buttons"><button onclick="redirectFromSlider(${idx})">WATCH</button></div></div>`;
     slides.appendChild(div);
   });
   updateSlidePosition();
   setInterval(nextSlide, 7000);
 }
 
-// Redirect from the movie slider (preserve selected server too)
 function redirectFromSlider(idx) {
-  const item = slideItems[idx];
-  const serverValue = document.getElementById('server')
-    ? document.getElementById('server').value
-    : localStorage.getItem('lastServer') || 'vidsrc.cc';
-    
+  const it = slideItems[idx];
+  const serverValue = document.getElementById('server').value || localStorage.getItem('lastServer') || 'vidsrc.cc';
   const p = new URLSearchParams({
-    id:         item.id,
-    media_type: item.media_type,
-    title:      item.title,
-    poster:     item.backdrop_path || item.poster_path || '',
-    season:     item.season   || '',
-    episode:    item.episode  || '',
-    server:     document.getElementById('server')
-                  ? document.getElementById('server').value
-                  : ''
-    
+    id: it.id,
+    media_type: it.media_type,
+    title: it.title,
+    poster: it.backdrop_path || it.poster_path,
+    season: it.season || '',
+    episode: it.episode || '',
+    server: serverValue
   });
   window.location.href = `watch.html?${p}`;
 }
@@ -274,239 +240,121 @@ function redirectFromSlider(idx) {
 function updateSlidePosition() {
   document.getElementById('slides').style.transform = `translateX(-${currentSlideIndex * 100}%)`;
 }
+function nextSlide() { currentSlideIndex = (currentSlideIndex + 1) % slideItems.length; updateSlidePosition(); }
+function prevSlide() { currentSlideIndex = (currentSlideIndex - 1 + slideItems.length) % slideItems.length; updateSlidePosition(); }
 
-function nextSlide() {
-  currentSlideIndex = (currentSlideIndex + 1) % slideItems.length;
-  updateSlidePosition();
-}
-
-function prevSlide() {
-  currentSlideIndex = (currentSlideIndex - 1 + slideItems.length) % slideItems.length;
-  updateSlidePosition();
-}
-
-// Change server embed URL
+// Change server
 function changeServer() {
   const server = document.getElementById('server').value;
-  const type   = currentItem.media_type === 'movie' ? 'movie' : 'tv';
-  let embedURL = '';
-
+  const type = currentItem.media_type === 'movie' ? 'movie' : 'tv';
+  let url = '';
   switch (server) {
     case 'vidsrc.cc':
-      embedURL = currentItem.episode
-        ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`
-        : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+      url = currentItem.episode ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}` : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
       break;
-
     case 'vidsrc.in':
-      embedURL = currentItem.episode
-        ? `https:/vidsrc.in/embed/tv/${currentItem.id}/${currentItem.season}-${currentItem.episode}`
-        : `https://vidsrc.in/embed/movie/${currentItem.id}`;
-      
+      url = currentItem.episode ? `https://vidsrc.in/embed/tv/${currentItem.id}/${currentItem.season}-${currentItem.episode}` : `https://vidsrc.in/embed/movie/${currentItem.id}`;
       break;
-
-      case 'player.videasy.net':
-        embedURL = `https://player.videasy.net/movie/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
-           
+    case 'player.videasy.net':
+      url = `https://player.videasy.net/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      break;
     case '2embed':
-      embedURL = embedURL = currentItem.episode
-      ?`https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`
-      : `https://www.2embed.cc/embed/${currentItem.id}`;
-       
+      url = currentItem.episode ? `https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}` : `https://www.2embed.cc/embed/${currentItem.id}`;
       break;
-
-      case '2embed RU':
-        embedURL = `https://www.2embed.ru/embed/tmdb/tv?id=${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`;  
-
-      case '2Anime': {
-        // 1. Build a clean slug from the title/name
-        let slug = (currentItem.title || currentItem.name || '')
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')   // strip punctuation
-          .trim()
-          .replace(/\s+/g, '-');      // spaces → hyphens
-      
-        // 3. Which episode?
-        const ep = currentItem.episode || 1;
-      
-        // 4. Build the final URL
-        embedURL = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
-        break;
-      }
-
-    case 'moviesapi.club animetv':
-      embedURL = `https://moviesapi.club/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
-      
+    case '2embed RU':
+      url = `https://www.2embed.ru/embed/tmdb/tv?id=${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`;
       break;
-
-      case 'moviesapi.club movie':
-      embedURL = `https://moviesapi.club/movie/${currentItem.id}`;
-      
+    case '2Anime': {
+      let slug = (currentItem.title || currentItem.name || '').toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+      const ep = currentItem.episode || 1;
+      url = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
       break;
-
+    }
     case 'multiembed.mov':
-      embedURL = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1${currentItem.episode ? `&s=${currentItem.season}&e=${currentItem.episode}` : ''}`;
+      url = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1${currentItem.episode ? `&s=${currentItem.season}&e=${currentItem.episode}` : ''}`;
       break;
-
-    case 'apimocine tv':
-      embedURL = `https://apimocine.vercel.app/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
-      
+    case 'moviesapi.club animetv':
+      url = `https://moviesapi.club/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
-
-      case 'apimocine movie':
-        embedURL = `https://apimocine.vercel.app/${type}/${currentItem.id}`;
-        
-        break;  
-
+    case 'moviesapi.club movie':
+      url = `https://moviesapi.club/movie/${currentItem.id}`;
+      break;
+    case 'apimocine-tv':
+      url = `https://apimocine.vercel.app/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      break;
+    case 'apimocine-movie':
+      url = `https://apimocine.vercel.app/movie/${currentItem.id}`;
+      break;
     default:
-      embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+      url = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
   }
-
-  document.getElementById('modal-video').src = embedURL;
-  localStorage.setItem('lastServer', server);
+  document.getElementById('modal-video').src = url;
 }
 
+// Seasons & Episodes
 async function loadSeasons(item) {
   const data = await (await fetch(`${BASE_URL}/tv/${item.id}?api_key=${API_KEY}`)).json();
   currentSeasons = data.seasons.filter(s => s.season_number >= 0);
-  const sel = document.getElementById('season-select');
-  sel.innerHTML = '';
-  currentSeasons.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s.season_number;
-    opt.textContent = s.name || `Season ${s.season_number}`;
-    sel.appendChild(opt);
-  });
+  const sel = document.getElementById('season-select'); sel.innerHTML = '';
+  currentSeasons.forEach(s => sel.append(new Option(s.name || `Season ${s.season_number}`, s.season_number)));
   const init = item.season || currentSeasons[0].season_number;
   item.season = init;
   sel.value = init;
-  sel.onchange = () => {
-    currentItem.season = parseInt(sel.value);
-    currentItem.episode = null;
-    addToHistory(currentItem);
-    displayEpisodes(currentItem);
-  };
+  sel.onchange = () => { item.season = +sel.value; item.episode = null; addToHistory(item); displayEpisodes(item); };
 }
-
 async function displayEpisodes(item) {
-  const list      = document.getElementById('episode-list');
-  const seasonNum = item.season || parseInt(document.getElementById('season-select').value);
-  item.season = seasonNum;         // ← keep currentItem.season in sync
-  const res       = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNum}?api_key=${API_KEY}`);
-  const data      = await res.json();
-  const eps       = data.episodes || [];
-
-  list.innerHTML    = '';
-  list.style.maxHeight = '400px';
-  list.style.overflowY = 'auto';
-
-  eps.forEach(ep => {
+  const list = document.getElementById('episode-list'); list.innerHTML = '';
+  const sn = item.season || +document.getElementById('season-select').value;
+  item.season = sn;
+  const data = await (await fetch(`${BASE_URL}/tv/${item.id}/season/${sn}?api_key=${API_KEY}`)).json();
+  (data.episodes || []).forEach(ep => {
     const btn = document.createElement('button');
     btn.textContent = `E${ep.episode_number}: ${ep.name}`;
-    if (item.episode === ep.episode_number && seasonNum === item.season) {
-      btn.classList.add('active-episode');
-    }
+    if (item.episode === ep.episode_number) btn.classList.add('active-episode');
     btn.onclick = () => {
-      item.season = seasonNum;      // ← ensure the clicked‐in season is saved
-      currentItem.episode = ep.episode_number;
+      item.episode = ep.episode_number;
       changeServer();
-      addToHistory(currentItem);
+      addToHistory(item);
       list.querySelectorAll('button').forEach(b => b.classList.remove('active-episode'));
       btn.classList.add('active-episode');
     };
-    list.appendChild(btn);
+    list.append(btn);
   });
 }
 
-// Search redirect with titles
-// Search and style results
+// Search
 async function searchTMDB() {
-  const q = document.getElementById('search-input').value.trim();
-  if (!q) return;
-  const data = await (await fetch(
-    `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(q)}`
-  )).json();
-  const cont = document.getElementById('search-results');
-  cont.innerHTML = '';
-  data.results.forEach(item => {
-    if (!item.poster_path) return;
-    item.media_type = item.media_type || 'movie';
-
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('search-result-item','card');
-
-    const img = document.createElement('img');
-    img.src = `${IMG_URL}${item.poster_path}`;
-    img.alt = item.title || item.name;
-    img.style.cursor = 'pointer';
-    img.onclick = () => {
-      const p = new URLSearchParams({
-        id: item.id,
-        media_type: item.media_type,
-        title: item.title || item.name || '',
-        poster: item.poster_path
-      });
-      window.location.href = `watch.html?${p}`;
-    };
-    wrapper.appendChild(img);
-
-    const caption = document.createElement('p');
-    caption.textContent = truncateTitle(item.title || item.name || '', 20);
-    wrapper.appendChild(caption);
-
-    cont.appendChild(wrapper);
+  const q = document.getElementById('search-input').value.trim(); if (!q) return;
+  const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  const cont = document.getElementById('search-results'); cont.innerHTML = '';
+  const serverValue = document.getElementById('server').value || localStorage.getItem('lastServer') || 'vidsrc.cc';
+  data.results.forEach(it => { if (!it.poster_path) return; it.media_type = it.media_type || 'movie';
+    const card = document.createElement('div'); card.classList.add('card');
+    const img = document.createElement('img'); img.src = IMG_URL + it.poster_path; img.alt = it.title || it.name;
+    img.onclick = () => { const p = new URLSearchParams({ id: it.id, media_type: it.media_type, title: it.title || it.name, poster: it.poster_path, server: serverValue }); window.location.href = `watch.html?${p}`; };
+    card.append(img);
+    const ov = document.createElement('div'); ov.classList.add('title-overlay'); ov.innerText = truncateTitle(it.title || it.name, 30);
+    card.append(ov);
+    cont.append(card);
   });
 }
 
-// Render history items
+// Render history
 function renderHistory() {
-  const container = document.getElementById('history-list');
-  if (!container) return;
-  const history = JSON.parse(localStorage.getItem('watchHistory')) || [];
-  container.innerHTML = '';
-  history.forEach(item => {
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('history-item','card');
-
-    // Poster click navigates with saved server
-    const img = document.createElement('img');
-    img.src = `${IMG_URL}${item.poster_path}`;
-    img.alt = item.title;
-    img.style.cursor = 'pointer';
-    img.onclick = () => {
-      const p = new URLSearchParams({
-        id:         item.id,
-        media_type: item.media_type,
-        title:      item.title,
-        poster:     item.poster_path,
-        season:     item.season   || '',
-        episode:    item.episode  || '',
-        server:     item.server   || ''    // use the saved server
-      });
-      window.location.href = `watch.html?${p}`;
-    };
-
-    // Remove button
-    const btn = document.createElement('button');
-    btn.textContent = '✕';
-    btn.className   = 'remove-btn';
-    btn.onclick = e => {
-      e.stopPropagation();
-      let hist = JSON.parse(localStorage.getItem('watchHistory')) || [];
-      hist = hist.filter(h => h.id !== item.id);
-      localStorage.setItem('watchHistory', JSON.stringify(hist));
-      renderHistory();
-    };
-
-    // Title overlay for consistency
-    const titleOv = document.createElement('div');
-    titleOv.classList.add('title-overlay');
-    titleOv.innerText = truncateTitle(item.title, 25);
-
-    wrapper.appendChild(img);
-    wrapper.appendChild(btn);
-    wrapper.appendChild(titleOv);
-    container.appendChild(wrapper);
+  const c = document.getElementById('history-list'); if (!c) return;
+  const hist = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  c.innerHTML = '';
+  hist.forEach(it => {
+    const card = document.createElement('div'); card.classList.add('card', 'history-item');
+    const img = document.createElement('img'); img.src = IMG_URL + it.poster_path; img.alt = it.title;
+    img.onclick = () => { const p = new URLSearchParams({ id: it.id, media_type: it.media_type, title: it.title, poster: it.poster_path, season: it.season || '', episode: it.episode || '', server: it.server }); window.location.href = `watch.html?${p}`; };
+    card.append(img);
+    const btn = document.createElement('button'); btn.classList.add('remove-btn'); btn.textContent = '✕'; btn.onclick = e => { e.stopPropagation(); const h = JSON.parse(localStorage.getItem('watchHistory')) || []; localStorage.setItem('watchHistory', JSON.stringify(h.filter(x => x.id !== it.id))); renderHistory(); };
+    card.append(btn);
+    const ov = document.createElement('div'); ov.classList.add('title-overlay'); ov.innerText = truncateTitle(it.title, 25);
+    card.append(ov);
+    c.append(card);
   });
 }
 
