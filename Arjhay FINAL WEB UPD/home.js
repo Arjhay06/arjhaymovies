@@ -45,12 +45,15 @@ function closeSearchModal() {
 // Add or update watch history
 function addToHistory(item) {
   const entry = {
-    id: item.id,
-    title: item.title || item.name || '',
-    poster_path: item.poster_path || item.poster || '',
+    id:         item.id,
+    title:      item.title || item.name || '',
+    poster_path:item.poster_path || item.poster || '',
     media_type: item.media_type,
-    season: item.season || null,
-    episode: item.episode || null
+    season:     item.season   || null,
+    episode:    item.episode  || null,
+    server:     document.getElementById('server')
+                  ? document.getElementById('server').value
+                  : null
   };
   let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
   history = history.filter(i => i.id !== entry.id);
@@ -85,8 +88,14 @@ async function init() {
     const poster = params.get('poster');
     const season = params.get('season') ? parseInt(params.get('season')) : null;
     const episode = params.get('episode') ? parseInt(params.get('episode')) : null;
+    const selectedServer = params.get('server');
 
     currentItem = { id, media_type, title, poster_path: poster, season, episode };
+    // if history server exists, set dropdown
+    if (selectedServer) {
+      const sel = document.getElementById('server');
+      if (sel) sel.value = selectedServer;
+    }
     addToHistory(currentItem);
 
     if (media_type === 'tv') {
@@ -132,7 +141,6 @@ async function init() {
 }
 
 
-
 // Fetch trending data
 async function fetchTrending(type) {
   const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
@@ -152,13 +160,20 @@ async function fetchTrendingAnime() {
   return all;
 }
 
-// Display list with redirection
 function displayList(items, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
+
   items.forEach(item => {
     if (!item.poster_path) return;
-    if (!item.media_type) item.media_type = containerId.includes('tv') ? 'tv' : 'movie';
+    if (!item.media_type) 
+      item.media_type = containerId.includes('tv') ? 'tv' : 'movie';
+
+    // ── build card
+    const card = document.createElement('div');
+    card.classList.add('card');
+
+    // poster image
     const img = document.createElement('img');
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name;
@@ -166,20 +181,38 @@ function displayList(items, containerId) {
     img.style.cursor = 'pointer';
     img.onclick = () => {
       const p = new URLSearchParams({
-        id: item.id,
+        id:         item.id,
         media_type: item.media_type,
-        title: item.title || item.name || '',
-        poster: item.poster_path,
-        season: item.season || '',
-        episode: item.episode || ''
+        title:      item.title  || item.name  || '',
+        poster:     item.poster_path,
+        season:     item.season  || '',
+        episode:    item.episode || '',
+        server:     document.getElementById('server').value
       });
       window.location.href = `watch.html?${p}`;
     };
-    container.appendChild(img);
+    card.appendChild(img);
+
+    // ── HD badge (always show; tweak logic if you only want it for high-rated)
+    const hd = document.createElement('span');
+    hd.classList.add('badge','quality');
+    hd.innerText = 'HD';
+    card.appendChild(hd);
+
+    // ── type & year badge
+    const info = document.createElement('span');
+    info.classList.add('badge','info');
+   
+
+    // ── title overlay
+    const titleOv = document.createElement('div');
+    titleOv.classList.add('title-overlay');
+    titleOv.innerText = truncateTitle(item.title || item.name, 30);
+    card.appendChild(titleOv);
+
+    container.appendChild(card);
   });
 }
-
-
 
 // Slider setup
 async function setupSlider() {
@@ -201,8 +234,8 @@ async function setupSlider() {
     div.innerHTML = `
       <div class="slide-overlay">
         <div class="meta">🎬 ${item.media_type} • ⭐ ${Math.round(
-      item.vote_average
-    )} • 🕒 ${item.runtime} mins</div>
+        item.vote_average
+      )} • 🕒 ${item.runtime} mins</div>
         <h1>${truncateTitle(item.title, 30)}</h1>
         <p>${item.overview?.slice(0, 160)}...</p>
         <div class="buttons">
@@ -216,10 +249,25 @@ async function setupSlider() {
   setInterval(nextSlide, 7000);
 }
 
-// Redirect from slider
+// Redirect from the movie slider (preserve selected server too)
 function redirectFromSlider(idx) {
   const item = slideItems[idx];
-  const p = new URLSearchParams({ id: item.id, media_type: item.media_type, title: item.title, poster: item.backdrop_path });
+  const serverValue = document.getElementById('server')
+    ? document.getElementById('server').value
+    : localStorage.getItem('lastServer') || 'vidsrc.cc';
+    
+  const p = new URLSearchParams({
+    id:         item.id,
+    media_type: item.media_type,
+    title:      item.title,
+    poster:     item.backdrop_path || item.poster_path || '',
+    season:     item.season   || '',
+    episode:    item.episode  || '',
+    server:     document.getElementById('server')
+                  ? document.getElementById('server').value
+                  : ''
+    
+  });
   window.location.href = `watch.html?${p}`;
 }
 
@@ -260,14 +308,15 @@ function changeServer() {
       case 'player.videasy.net':
         embedURL = `https://player.videasy.net/movie/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
            
-    
-
     case '2embed':
       embedURL = embedURL = currentItem.episode
       ?`https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`
       : `https://www.2embed.cc/embed/${currentItem.id}`;
        
       break;
+
+      case '2embed RU':
+        embedURL = `https://www.2embed.ru/embed/tmdb/tv?id=${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`;  
 
       case '2Anime': {
         // 1. Build a clean slug from the title/name
@@ -285,9 +334,14 @@ function changeServer() {
         break;
       }
 
-    case 'moviesapi.club':
-      embedURL = `https://moviesapi.club/${type}/${currentItem.id}-${currentItem.season}-${currentItem.episode}`;
-      embedURL = `https://moviesapi.club/${type}/${currentItem.id}`;
+    case 'moviesapi.club animetv':
+      embedURL = `https://moviesapi.club/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      
+      break;
+
+      case 'moviesapi.club movie':
+      embedURL = `https://moviesapi.club/movie/${currentItem.id}`;
+      
       break;
 
     case 'multiembed.mov':
@@ -303,13 +357,13 @@ function changeServer() {
         embedURL = `https://apimocine.vercel.app/${type}/${currentItem.id}`;
         
         break;  
-  
 
     default:
       embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
   }
 
   document.getElementById('modal-video').src = embedURL;
+  localStorage.setItem('lastServer', server);
 }
 
 async function loadSeasons(item) {
@@ -324,6 +378,7 @@ async function loadSeasons(item) {
     sel.appendChild(opt);
   });
   const init = item.season || currentSeasons[0].season_number;
+  item.season = init;
   sel.value = init;
   sel.onchange = () => {
     currentItem.season = parseInt(sel.value);
@@ -336,6 +391,7 @@ async function loadSeasons(item) {
 async function displayEpisodes(item) {
   const list      = document.getElementById('episode-list');
   const seasonNum = item.season || parseInt(document.getElementById('season-select').value);
+  item.season = seasonNum;         // ← keep currentItem.season in sync
   const res       = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNum}?api_key=${API_KEY}`);
   const data      = await res.json();
   const eps       = data.episodes || [];
@@ -351,6 +407,7 @@ async function displayEpisodes(item) {
       btn.classList.add('active-episode');
     }
     btn.onclick = () => {
+      item.season = seasonNum;      // ← ensure the clicked‐in season is saved
       currentItem.episode = ep.episode_number;
       changeServer();
       addToHistory(currentItem);
@@ -362,6 +419,7 @@ async function displayEpisodes(item) {
 }
 
 // Search redirect with titles
+// Search and style results
 async function searchTMDB() {
   const q = document.getElementById('search-input').value.trim();
   if (!q) return;
@@ -373,19 +431,29 @@ async function searchTMDB() {
   data.results.forEach(item => {
     if (!item.poster_path) return;
     item.media_type = item.media_type || 'movie';
+
     const wrapper = document.createElement('div');
-    wrapper.className = 'search-result-item';
+    wrapper.classList.add('search-result-item','card');
+
     const img = document.createElement('img');
-    img.src    = `${IMG_URL}${item.poster_path}`;
-    img.alt    = item.title || item.name;
+    img.src = `${IMG_URL}${item.poster_path}`;
+    img.alt = item.title || item.name;
+    img.style.cursor = 'pointer';
     img.onclick = () => {
-      const p = new URLSearchParams({ id: item.id, media_type: item.media_type, title: item.title || item.name || '', poster: item.poster_path });
+      const p = new URLSearchParams({
+        id: item.id,
+        media_type: item.media_type,
+        title: item.title || item.name || '',
+        poster: item.poster_path
+      });
       window.location.href = `watch.html?${p}`;
     };
+    wrapper.appendChild(img);
+
     const caption = document.createElement('p');
     caption.textContent = truncateTitle(item.title || item.name || '', 20);
-    wrapper.appendChild(img);
     wrapper.appendChild(caption);
+
     cont.appendChild(wrapper);
   });
 }
@@ -398,14 +466,27 @@ function renderHistory() {
   container.innerHTML = '';
   history.forEach(item => {
     const wrapper = document.createElement('div');
-    wrapper.className = 'history-item';
+    wrapper.classList.add('history-item','card');
+
+    // Poster click navigates with saved server
     const img = document.createElement('img');
-    img.src    = `${IMG_URL}${item.poster_path}`;
-    img.alt    = item.title;
+    img.src = `${IMG_URL}${item.poster_path}`;
+    img.alt = item.title;
+    img.style.cursor = 'pointer';
     img.onclick = () => {
-      const p = new URLSearchParams({ id: item.id, media_type: item.media_type, title: item.title, poster: item.poster_path, season: item.season || '', episode: item.episode || '' });
+      const p = new URLSearchParams({
+        id:         item.id,
+        media_type: item.media_type,
+        title:      item.title,
+        poster:     item.poster_path,
+        season:     item.season   || '',
+        episode:    item.episode  || '',
+        server:     item.server   || ''    // use the saved server
+      });
       window.location.href = `watch.html?${p}`;
     };
+
+    // Remove button
     const btn = document.createElement('button');
     btn.textContent = '✕';
     btn.className   = 'remove-btn';
@@ -416,8 +497,15 @@ function renderHistory() {
       localStorage.setItem('watchHistory', JSON.stringify(hist));
       renderHistory();
     };
+
+    // Title overlay for consistency
+    const titleOv = document.createElement('div');
+    titleOv.classList.add('title-overlay');
+    titleOv.innerText = truncateTitle(item.title, 25);
+
     wrapper.appendChild(img);
     wrapper.appendChild(btn);
+    wrapper.appendChild(titleOv);
     container.appendChild(wrapper);
   });
 }
