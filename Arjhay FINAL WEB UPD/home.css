@@ -1224,12 +1224,12 @@ body::before {
   }
 }
 /* ─── Mobile: Stack Watch Controls ─── */
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   /* Make the video full-width but let it size naturally */
   .watch-section .player-container {
     width: 100% !important;
     max-width: none !important;
-    height: auto !important;
+    height: 60vh !important;
     margin: 0 0 1rem !important;    /* space below for controls */
     padding: 0 !important;
     position: static !important;    /* undo any absolute/ratio hacks */
