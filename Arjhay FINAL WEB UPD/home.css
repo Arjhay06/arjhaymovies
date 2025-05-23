@@ -1028,7 +1028,7 @@ body::before {
   padding: 10px;
   color: #fff;
   background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-  font-size: 0.9rem;
+  font-size: 1.0rem;
   z-index: 1;
 }
 
