@@ -1278,3 +1278,7 @@ body::before {
   color: #fff;      /* or whatever accent color you prefer */
   font-size: 1.5rem;
 }
+/* Remove the black title-overlay under posters */
+.list .card .title-overlay {
+  background: none !important;
+}
