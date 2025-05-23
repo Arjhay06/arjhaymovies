@@ -1165,5 +1165,29 @@ body::before {
   background: #ff7875;
 }
 
+/* 1) Responsive video container */
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;  /* 16:9 aspect ratio – change to 75% for 4:3, etc. */
+  overflow: hidden;
+  background: #000;
+}
 
+/* 2) Make the iframe/video stretch */
+.video-container iframe,
+.video-container video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;   /* fill the box without distortion */
+}
+
+/* 3) Allow fullscreen on mobile */
+.video-container iframe {
+  /* if you’re embedding via <iframe> */
+  allowfullscreen: true;
+}
 
