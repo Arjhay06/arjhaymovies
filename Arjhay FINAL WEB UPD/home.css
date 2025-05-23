@@ -20,26 +20,12 @@
   flex: 0 0 auto;
 }
 
-/* Adjust the player’s width on small screens */
-@media (max-width: 600px) {
-  .video-container {
-    width: 90vw;       /* 90% of viewport width */
-    max-width: 350px;  /* never exceed 350px, adjust as you like */
-    margin: 0 auto;    /* center it */
-  }
-  
-  .video-container iframe,
-  .video-container video {
-    width: 100% !important;
-    height: auto !important;  /* maintain aspect ratio */
-  }
-}
 
 /* Shrink images on phones */
 @media (max-width: 600px) {
   #search-results .result-item {
-    width: 500vw;         /* about 2 per screen */
-    max-width: 500px;    /* don’t go wider */
+    width: 100vw;         /* about 2 per screen */
+    max-width: 150px;    /* don’t go wider */
   }
   #search-results .result-item img {
     width: 100%;
@@ -1180,6 +1166,8 @@ body::before {
   background: #ff7875;
 }
 
+
+
 /* ==============================
    Mobile override for video size
    ============================== */
@@ -1210,4 +1198,3 @@ body::before {
     top: 0; left: 0;
   }
 }
-
