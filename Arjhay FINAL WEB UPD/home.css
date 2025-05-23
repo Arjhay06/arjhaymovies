@@ -1180,5 +1180,34 @@ body::before {
   background: #ff7875;
 }
 
+/* ==============================
+   Mobile override for video size
+   ============================== */
+@media (max-width: 768px) {
+  /* Make the container span (almost) the full screen */
+  .watch-section .player-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
 
+  /* Force the iframe to fill that container */
+  .watch-section .player-container iframe {
+    width: 100% !important;
+    height: auto !important;      /* let it scale naturally */
+    max-height: none !important;  /* remove any caps */
+  }
+
+  /* (Optional) if you want a fixed 16:9 aspect ratio */
+  .watch-section .player-container {
+    /* 56.25% = 9/16 */
+    padding-top: 56.25%;
+    position: relative;
+  }
+  .watch-section .player-container iframe {
+    position: absolute;
+    top: 0; left: 0;
+  }
+}
 
