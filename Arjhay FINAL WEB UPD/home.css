@@ -1198,3 +1198,28 @@ body::before {
     top: 0; left: 0;
   }
 }
+
+/* ─── Mobile: Stack Controls & Reveal Server Selector ─── */
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+
+  .control-panel {
+    width: 100% !important;
+    min-width: auto !important;
+  }
+
+  /* Make sure the select fills its panel */
+  .control-panel select {
+    width: 100% !important;
+    font-size: 1rem;
+  }
+
+  /* Optional spacing under the video */
+  .watch-section .player-container {
+    margin-bottom: 1rem !important;
+  }
+}
