@@ -210,14 +210,33 @@ async function setupSlider() {
       return { ...it, runtime: full.runtime, media_type: 'movie' };
     })
   );
-  const slides = document.getElementById('slides'); slides.innerHTML = '';
+
+  const slides = document.getElementById('slides');
+  slides.innerHTML = '';
+
   slideItems.forEach((it, idx) => {
+    // calculate star rating out of 5
+    const stars = Math.round(it.vote_average / 2);
+    const starHtml =
+      '<i class="fa fa-star"></i>'.repeat(stars) +
+      '<i class="fa fa-star-o"></i>'.repeat(5 - stars);
+
     const div = document.createElement('div');
     div.className = 'slide';
     div.style.backgroundImage = `url(${IMG_URL}${it.backdrop_path})`;
-    div.innerHTML = `<div class="slide-overlay"><h1>${truncateTitle(it.title, 30)}</h1><div class="buttons"><button onclick="redirectFromSlider(${idx})">WATCH</button></div></div>`;
+    div.innerHTML = `
+      <div class="slide-overlay">
+        <h1>${it.title || it.name}</h1>
+        <div class="rating">${starHtml}</div>
+        <p>${truncateTitle(it.overview, 150)}</p>
+        <button class="play-btn" onclick="redirectFromSlider(${idx})">
+          <i class="fa fa-play"></i> Play
+        </button>
+      </div>
+    `;
     slides.appendChild(div);
   });
+
   updateSlidePosition();
   setInterval(nextSlide, 7000);
 }
