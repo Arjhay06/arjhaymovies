@@ -20,6 +20,21 @@
   flex: 0 0 auto;
 }
 
+/* Adjust the player’s width on small screens */
+@media (max-width: 600px) {
+  .video-container {
+    width: 90vw;       /* 90% of viewport width */
+    max-width: 350px;  /* never exceed 350px, adjust as you like */
+    margin: 0 auto;    /* center it */
+  }
+  
+  .video-container iframe,
+  .video-container video {
+    width: 100% !important;
+    height: auto !important;  /* maintain aspect ratio */
+  }
+}
+
 /* Shrink images on phones */
 @media (max-width: 600px) {
   #search-results .result-item {
@@ -1165,29 +1180,5 @@ body::before {
   background: #ff7875;
 }
 
-/* 1) Responsive video container */
-.video-container {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%;  /* 16:9 aspect ratio – change to 75% for 4:3, etc. */
-  overflow: hidden;
-  background: #000;
-}
 
-/* 2) Make the iframe/video stretch */
-.video-container iframe,
-.video-container video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover;   /* fill the box without distortion */
-}
-
-/* 3) Allow fullscreen on mobile */
-.video-container iframe {
-  /* if you’re embedding via <iframe> */
-  allowfullscreen: true;
-}
 
