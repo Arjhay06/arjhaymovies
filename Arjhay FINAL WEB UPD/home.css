@@ -1229,7 +1229,7 @@ body::before {
   .watch-section .player-container {
     width: 100% !important;
     max-width: none !important;
-    height: 80vh !important;
+    height: 50vh !important;
     margin: 0 0 1rem !important;    /* space below for controls */
     padding: 0 !important;
     position: static !important;    /* undo any absolute/ratio hacks */
