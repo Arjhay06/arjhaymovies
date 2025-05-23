@@ -1021,12 +1021,6 @@ body::before {
   left: 8px;
 }
 
-/* bottom-left “Movie · Year” badge */
-.list .card .info {
-  bottom: 8px;
-  left: 8px;
-}
-
 /* bottom gradient + title */
 .list .card .title-overlay {
   position: absolute;
