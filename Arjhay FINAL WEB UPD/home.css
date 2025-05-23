@@ -1276,3 +1276,28 @@ body::before {
 .list .card .title-overlay {
   background: none !important;
 }
+
+/* ─── Mobile: Swipeable Watch History ─── */
+@media (max-width: 768px) {
+  /* 1) Make the history list horizontal */
+  #history-list {
+    display: flex !important;               /* already flex, but ensure no wrap */
+    flex-wrap: nowrap !important;           /* prevent wrapping onto new lines */
+    overflow-x: auto !important;            /* enable horizontal scroll */
+    -webkit-overflow-scrolling: touch;      /* iOS momentum scrolling */
+    gap: 1rem !important;                   /* spacing between cards */
+    padding: 1rem 0 !important;             /* a little vertical breathing room */
+  }
+
+  /* 2) Force each history card to stay a fixed width */
+  #history-list .history-item {
+    flex: 0 0 auto !important;              /* no grow, no shrink */
+    width: 120px !important;                /* or whatever width you prefer */
+    min-width: 120px !important;
+  }
+
+  /* 3) (Optional) hide native scroll bar for a cleaner look */
+  #history-list::-webkit-scrollbar {
+    display: none;
+  }
+}
