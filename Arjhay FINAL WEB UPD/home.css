@@ -1264,3 +1264,17 @@ body::before {
     font-size: 1rem !important;
   }
 }
+
+/* Remove dark bg on Trending row arrows */
+.row .nav.prev,
+.row .nav.next {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Optionally make the arrow icon itself more visible */
+.row .nav.prev,
+.row .nav.next {
+  color: #fff;      /* or whatever accent color you prefer */
+  font-size: 1.5rem;
+}
