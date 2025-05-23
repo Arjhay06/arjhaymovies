@@ -38,8 +38,8 @@
 /* Shrink images on phones */
 @media (max-width: 600px) {
   #search-results .result-item {
-    width: 150vw;         /* about 2 per screen */
-    max-width: 150px;    /* don’t go wider */
+    width: 500vw;         /* about 2 per screen */
+    max-width: 500px;    /* don’t go wider */
   }
   #search-results .result-item img {
     width: 100%;
