@@ -1223,3 +1223,44 @@ body::before {
     margin-bottom: 1rem !important;
   }
 }
+/* ─── Mobile: Stack Watch Controls ─── */
+@media (max-width: 768px) {
+  /* Make the video full-width but let it size naturally */
+  .watch-section .player-container {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 0 1rem !important;    /* space below for controls */
+    padding: 0 !important;
+    position: static !important;    /* undo any absolute/ratio hacks */
+  }
+  .watch-section .player-container iframe {
+    width: 100% !important;
+    height: auto !important;
+    position: static !important;
+  }
+
+  /* Now stack your controls vertically */
+  .controls {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    width: 90% !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Each panel fills the width */
+  .control-panel {
+    flex: none !important;
+    width: 100% !important;
+    min-width: auto !important;
+  }
+
+  /* Make your selects full-width */
+  .control-panel select {
+    width: 100% !important;
+    font-size: 1rem !important;
+  }
+}
