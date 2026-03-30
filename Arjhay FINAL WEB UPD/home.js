@@ -433,6 +433,139 @@ function setupSeeAllLinks() {
 }
 
 /* ---------- WATCH PAGE ---------- */
+let watchDetails = null;
+let currentEpisodes = [];
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'Unknown date';
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+function truncateWords(str, maxLength = 110) {
+  if (typeof str !== 'string' || !str.trim()) return 'No description available.';
+  return str.length > maxLength ? `${str.slice(0, maxLength - 1).trim()}…` : str;
+}
+
+function updateWatchMeta() {
+  if (!watchDetails) return;
+
+  const isMovie = currentItem.media_type === 'movie';
+
+  const titleEl = document.getElementById('watch-title');
+  const descEl = document.getElementById('watch-description');
+  const posterEl = document.getElementById('watch-poster');
+  const yearEl = document.getElementById('watch-year');
+  const ratingEl = document.getElementById('watch-rating');
+  const runtimeEl = document.getElementById('watch-runtime');
+  const typeEl = document.getElementById('watch-type-badge');
+  const statusEl = document.getElementById('watch-status');
+  const countryEl = document.getElementById('watch-country');
+  const genresEl = document.getElementById('watch-genres');
+  const languageEl = document.getElementById('watch-language');
+  const seasonEl = document.getElementById('watch-season-display');
+  const episodeEl = document.getElementById('watch-episode-display');
+
+  if (titleEl) {
+    titleEl.textContent = watchDetails.title || watchDetails.name || currentItem.title || 'Untitled';
+  }
+
+  if (descEl) {
+    descEl.textContent = watchDetails.overview || 'No description available.';
+  }
+
+  if (posterEl) {
+    const posterPath = watchDetails.poster_path || currentItem.poster_path || '';
+    posterEl.src = posterPath ? `${IMG_URL}${posterPath}` : '';
+    posterEl.alt = watchDetails.title || watchDetails.name || 'Poster';
+  }
+
+  if (yearEl) {
+    yearEl.textContent = getYear(watchDetails) || '—';
+  }
+
+  if (ratingEl) {
+    ratingEl.textContent = watchDetails.vote_average
+      ? `${watchDetails.vote_average.toFixed(1)} Rating`
+      : 'No rating';
+  }
+
+  if (runtimeEl) {
+    if (isMovie) {
+      runtimeEl.textContent = watchDetails.runtime ? `${watchDetails.runtime} min` : 'Movie';
+    } else {
+      runtimeEl.textContent = watchDetails.episode_run_time && watchDetails.episode_run_time[0]
+        ? `${watchDetails.episode_run_time[0]} min`
+        : 'Series';
+    }
+  }
+
+  if (typeEl) {
+    typeEl.textContent = isMovie ? 'MOVIE' : 'TV';
+  }
+
+  if (statusEl) {
+    statusEl.textContent = watchDetails.status || (isMovie ? 'Released' : 'Ongoing');
+  }
+
+  if (countryEl) {
+    if (isMovie) {
+      countryEl.textContent = Array.isArray(watchDetails.production_countries) && watchDetails.production_countries.length
+        ? watchDetails.production_countries.map(item => item.name).join(', ')
+        : '—';
+    } else {
+      countryEl.textContent = Array.isArray(watchDetails.origin_country) && watchDetails.origin_country.length
+        ? watchDetails.origin_country.join(', ')
+        : '—';
+    }
+  }
+
+  if (genresEl) {
+    genresEl.textContent = Array.isArray(watchDetails.genres) && watchDetails.genres.length
+      ? watchDetails.genres.map(genre => genre.name).join(', ')
+      : '—';
+  }
+
+  if (languageEl) {
+    languageEl.textContent = (watchDetails.original_language || '—').toUpperCase();
+  }
+
+  if (seasonEl) {
+    seasonEl.textContent = isMovie ? '—' : `Season ${currentItem.season || 1}`;
+  }
+
+  if (episodeEl) {
+    episodeEl.textContent = isMovie
+      ? '—'
+      : (currentItem.episode ? `Episode ${currentItem.episode}` : 'Select episode');
+  }
+}
+
+function applyWatchMode() {
+  const layout = document.getElementById('watch-layout');
+  if (!layout) return;
+
+  layout.classList.toggle('movie-mode', currentItem.media_type === 'movie');
+}
+
+async function fetchWatchDetails(item) {
+  const type = item.media_type === 'movie' ? 'movie' : 'tv';
+  const res = await fetch(`${BASE_URL}/${type}/${item.id}?api_key=${API_KEY}`);
+  const data = await res.json();
+
+  watchDetails = data;
+  currentItem.title = data.title || data.name || currentItem.title;
+  currentItem.poster_path = data.poster_path || currentItem.poster_path;
+
+  updateWatchMeta();
+  applyWatchMode();
+}
+
 function changeServer() {
   const frame = document.getElementById('modal-video');
   const serverSelect = document.getElementById('server');
@@ -440,6 +573,7 @@ function changeServer() {
   if (!frame || !serverSelect || !currentItem.id) return;
 
   const server = serverSelect.value;
+  currentItem.server = server;
   localStorage.setItem('lastServer', server);
 
   const type = currentItem.media_type === 'movie' ? 'movie' : 'tv';
@@ -520,6 +654,49 @@ function changeServer() {
 
 window.changeServer = changeServer;
 
+function renderSeasonCards() {
+  const container = document.getElementById('season-cards');
+  if (!container || currentItem.media_type === 'movie') return;
+
+  container.innerHTML = '';
+
+  currentSeasons.forEach(season => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'season-card';
+
+    if (Number(currentItem.season) === Number(season.season_number)) {
+      card.classList.add('active');
+    }
+
+    const imagePath = season.poster_path || watchDetails?.backdrop_path || watchDetails?.poster_path || '';
+    card.innerHTML = `
+      ${imagePath ? `<img src="${IMG_URL}${imagePath}" alt="${season.name || `Season ${season.season_number}`}">` : ''}
+      <div class="season-card-body">
+        <div class="season-card-title">${season.name || `Season ${season.season_number}`}</div>
+        <div class="season-card-sub">${season.episode_count || 0} episodes</div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      const seasonSelect = document.getElementById('season-select');
+      currentItem.season = Number(season.season_number);
+      currentItem.episode = null;
+
+      if (seasonSelect) {
+        seasonSelect.value = String(season.season_number);
+      }
+
+      addToHistory(currentItem);
+      updateWatchMeta();
+      renderSeasonCards();
+      displayEpisodes(currentItem);
+    });
+
+    container.appendChild(card);
+  });
+}
+
 async function loadSeasons(item) {
   const seasonSelect = document.getElementById('season-select');
   if (!seasonSelect) return;
@@ -540,14 +717,29 @@ async function loadSeasons(item) {
 
   const initialSeason = item.season || (currentSeasons[0] ? currentSeasons[0].season_number : 1);
   item.season = initialSeason;
-  seasonSelect.value = initialSeason;
+  seasonSelect.value = String(initialSeason);
 
   seasonSelect.onchange = () => {
     item.season = Number(seasonSelect.value);
     item.episode = null;
     addToHistory(item);
+    updateWatchMeta();
+    renderSeasonCards();
     displayEpisodes(item);
   };
+
+  renderSeasonCards();
+}
+
+function filterEpisodeCards() {
+  const input = document.getElementById('episode-filter');
+  const query = (input?.value || '').trim().toLowerCase();
+  const cards = document.querySelectorAll('.episode-card');
+
+  cards.forEach(card => {
+    const text = `${card.dataset.title || ''} ${card.dataset.episode || ''}`.toLowerCase();
+    card.style.display = text.includes(query) ? 'grid' : 'none';
+  });
 }
 
 async function displayEpisodes(item) {
@@ -562,31 +754,111 @@ async function displayEpisodes(item) {
   const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNumber}?api_key=${API_KEY}`);
   const data = await res.json();
 
-  (data.episodes || []).forEach(ep => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = `E${ep.episode_number}: ${ep.name}`;
+  currentEpisodes = data.episodes || [];
+
+  if (!currentEpisodes.length) {
+    episodeList.innerHTML = '<div class="empty-episodes">No episodes found.</div>';
+    return;
+  }
+
+  if (!item.episode) {
+    item.episode = currentEpisodes[0].episode_number;
+  }
+
+  currentEpisodes.forEach(ep => {
+    const card = document.createElement('article');
+    card.className = 'episode-card';
+    card.dataset.title = `${ep.name || ''} ${ep.overview || ''}`;
+    card.dataset.episode = `episode ${ep.episode_number}`;
 
     if (item.episode === ep.episode_number) {
-      card.classList.add('active');
+      card.classList.add('active-episode');
     }
 
+    const thumbSrc = ep.still_path
+      ? `${IMG_URL}${ep.still_path}`
+      : (watchDetails?.backdrop_path
+          ? `${IMG_URL}${watchDetails.backdrop_path}`
+          : (watchDetails?.poster_path ? `${IMG_URL}${watchDetails.poster_path}` : ''));
+
     card.innerHTML = `
-      <img src="${IMG_URL}${ep.still_path}">
-      <div>
-        <strong>EP ${ep.episode_number}</strong>
-        <p>${truncateText(ep.name, 40)}</p>
+      <div class="episode-thumb">
+        ${thumbSrc ? `<img src="${thumbSrc}" alt="${ep.name || `Episode ${ep.episode_number}`}">` : ''}
+        <span class="episode-badge">EP ${ep.episode_number}</span>
+      </div>
+      <div class="episode-card-body">
+        <div class="episode-card-title">${truncateText(ep.name || `Episode ${ep.episode_number}`, 44)}</div>
+        <div class="episode-card-desc">${truncateWords(ep.overview || 'No description available.', 120)}</div>
+        <div class="episode-card-date">${formatDate(ep.air_date)}</div>
       </div>
     `;
 
-    card.onclick = () => {
+    card.addEventListener('click', () => {
       item.episode = ep.episode_number;
+      addToHistory(item);
+      updateWatchMeta();
       changeServer();
-      displayEpisodes(item);
-    };
 
-    container.appendChild(card);
+      episodeList.querySelectorAll('.episode-card').forEach(entry => {
+        entry.classList.remove('active-episode');
+      });
+
+      card.classList.add('active-episode');
+    });
+
+    episodeList.appendChild(card);
   });
+
+  updateWatchMeta();
+  filterEpisodeCards();
+}
+
+async function initWatchPage() {
+  const params = new URLSearchParams(window.location.search);
+  const id = Number(params.get('id'));
+  const mediaType = params.get('media_type');
+  const title = params.get('title') || '';
+  const poster = params.get('poster') || '';
+  const season = params.get('season') ? Number(params.get('season')) : null;
+  const episode = params.get('episode') ? Number(params.get('episode')) : null;
+  const server = params.get('server') || localStorage.getItem('lastServer') || 'vidsrc.cc';
+
+  currentItem = {
+    id,
+    media_type: mediaType,
+    title,
+    poster_path: poster,
+    season,
+    episode,
+    server
+  };
+
+  const serverSelect = document.getElementById('server');
+  if (serverSelect) {
+    serverSelect.value = server;
+    serverSelect.addEventListener('change', () => {
+      currentItem.server = serverSelect.value;
+      addToHistory(currentItem);
+      changeServer();
+    });
+  }
+
+  const filterInput = document.getElementById('episode-filter');
+  if (filterInput) {
+    filterInput.addEventListener('input', filterEpisodeCards);
+  }
+
+  await fetchWatchDetails(currentItem);
+  addToHistory(currentItem);
+
+  if (mediaType === 'tv') {
+    await loadSeasons(currentItem);
+    await displayEpisodes(currentItem);
+  } else {
+    applyWatchMode();
+  }
+
+  changeServer();
 }
 
 /* ---------- SEARCH ---------- */
