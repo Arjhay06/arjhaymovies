@@ -4,143 +4,106 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arjhay TV</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Orbitron:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="home.css">
+
+  <link rel="stylesheet" href="home.css" />
   <script defer src="home.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-  <div class="main">
-    <div class="topbar">
-      <div class="logo">
-        <a href="index.html" class="logo-link">
-          <span class="logo-text">Arjhay<span class="small-tv">TV</span></span>
-        </a>
-      </div>
-      <div class="topbar-center">
-        <input
-          type="text"
-          class="search-bar"
-          placeholder="Search Yawa or Movie..."
-          onfocus="openSearchModal()"
-        />
-      </div>
-      <div class="topbar-links">
-        <a href="index.html">Home</a>
-        <a href="#">Contact</a>
-        <a href="#">Disclaimer</a>
-      </div>
+  <header class="top-nav">
+    <a href="index.html" class="brand">Arjhay<span>TV</span></a>
+
+    <nav class="tabs">
+      <button class="tab active" type="button">Movies</button>
+      <button class="tab" type="button">Series</button>
+      <button class="tab" type="button">TV Shows</button>
+    </nav>
+
+    <div class="nav-icons">
+      <button type="button" class="icon-btn" onclick="openSearchModal()" aria-label="Search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <button type="button" class="icon-btn" aria-label="Notifications">
+        <i class="fa-solid fa-bell"></i>
+      </button>
+      <button type="button" class="icon-btn" aria-label="Menu">
+        <i class="fa-solid fa-table-cells"></i>
+      </button>
     </div>
+  </header>
 
-  
+  <main class="page-shell">
+    <!-- HERO BANNER -->
+    <section class="hero-banner" id="hero-banner">
+      <div class="hero-backdrop" id="hero-backdrop"></div>
 
+      <div class="hero-content">
+        <div class="hero-meta">
+          <span class="imdb-badge">IMDb</span>
+          <span id="hero-rating">7.8 Rating</span>
+        </div>
 
-    <!-- Netflix‐style Hero Banner -->
-    <section id="banner" class="banner">
-      
-      <div class="slider" id="slider">
-        <div class="slides" id="slides"></div>
-        <ul class="dots" id="slider-dots"></ul>
-        <button class="arrow prev" onclick="prevSlide()">❮</button>
-        <button class="arrow next" onclick="nextSlide()">❯</button>
+        <h1 id="hero-title">Loading...</h1>
+        <p id="hero-overview">Please wait...</p>
+
+        <div class="hero-actions">
+          <button id="hero-watch-btn" class="watch-now-btn" type="button">Watch now</button>
+          <button id="hero-add-btn" class="plus-btn" type="button">+</button>
+        </div>
       </div>
+
+      <button class="hero-arrow hero-prev" type="button" onclick="prevHero()">❮</button>
+      <button class="hero-arrow hero-next" type="button" onclick="nextHero()">❯</button>
     </section>
 
-    <div class="row">
-      <h2>Trending Movies</h2>
-      <button class="nav prev" onclick="scrollList('movies-list', -1)">❮</button>
-      <div class="list" id="movies-list"></div>
-      <button class="nav next" onclick="scrollList('movies-list', 1)">❯</button>
-    </div>
+    
 
-    <div class="row">
-      <h2>Trending TV Shows</h2>
-      <button class="nav prev" onclick="scrollList('tvshows-list', -1)">❮</button>
-      <div class="list" id="tvshows-list"></div>
-      <button class="nav next" onclick="scrollList('tvshows-list', 1)">❯</button>
-    </div>
-
-    <div class="row">
-      <h2>Trending Anime</h2>
-      <button class="nav prev" onclick="scrollList('anime-list', -1)">❮</button>
-      <div class="list" id="anime-list"></div>
-      <button class="nav next" onclick="scrollList('anime-list', 1)">❯</button>
-    </div>
-
-    <div class="row">
-      <h2>Watch History</h2>
-      <div class="list" id="history-list"></div>
-    </div>
-
-    <footer>
-      <p>&copy; 2025 Arjhay TV. All rights reserved.</p>
-      <div class="footer-links">
-        <a href="#">Created By: Arjhay</a>
+    <section class="section-block">
+      <div class="section-head">
+        <h2>Continue watching</h2>
+        <a href="#" class="see-all">See all</a>
       </div>
-    </footer>
-  </div>
+      <div class="poster-row" id="history-list"></div>
+    </section>
 
-  <!-- Movie/Show Modal -->
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <div class="modal-body">
-        <!-- Left: Title, Rating, Description -->
-        <div style="flex: 1; min-width: 260px;">
-          <h2 id="modal-title" style="margin-bottom: 0.5rem;"></h2>
-          <div id="modal-rating" class="stars" style="margin-bottom: 0.5rem; color: gold;"></div>
-          <p id="modal-description" style="line-height: 1.6;"></p>
-        </div>
-        <!-- Right: Player, Server, Season, Episodes -->
-        <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column;">
-          <!-- Video Player -->
-          <div style="padding: 1rem; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.1); margin-bottom: 1rem;">
-            <iframe id="modal-video" frameborder="0" allowfullscreen style="width: 100%; height: 480px; border-radius: 10px;"></iframe>
-          </div>
-          <!-- Server Selector -->
-          <div class="server-selector" style="margin-bottom: 1rem;">
-            <label for="server">Change Server:</label>
-            <select id="server" onchange="changeServer()">
-              <option value="vidsrc.cc">Vidsrc.cc (Anime/Movie)</option>
-              <option value="vidsrc.me">Vidsrc.me (Anime/Movie)</option>
-              <option value="player.videasy.net">Player.Videasy.net (Anime/Movie)</option>
-              <option value="2embed">2Embed (Anime/Movie)</option>
-              <option value="2anime.xyz">2Anime.xyz (Anime)</option>
-              <option value="multiembed.mov">MultiEmbed (Anime/Movie)</option>
-              <option value="apimocine-movie">ApiMocine (Movie)</option>
-              <option value="apimocine-tv">ApiMocine (TV)</option>
-              
-            </select>
-          </div>
-          <!-- Season Selector -->
-          <div class="season-selector" id="season-selector" style="margin-bottom: 1rem; display: none;">
-            <label for="season-select">Select Season:</label>
-            <select id="season-select" onchange="selectSeason()"></select>
-          </div>
-          <!-- Episode List -->
-          <div class="episode-selector" id="episode-selector" style="display: none; flex: 1; overflow-y: auto;">
-            <h3>Episodes</h3>
-            <div id="episode-list" class="episode-list"></div>
-            <div id="episode-pagination" class="episode-pagination"></div>
-          </div>
-        </div>
+    <section class="section-block">
+      <div class="section-head">
+        <h2>Trending movies</h2>
+        <a href="#" class="see-all">See all</a>
       </div>
-    </div>
-  </div>
+      <div class="poster-row" id="movies-list"></div>
+    </section>
 
-  <!-- Search Modal -->
+    <section class="section-block">
+      <div class="section-head">
+        <h2>Top rated <span class="star">★</span></h2>
+        <a href="#" class="see-all">See all</a>
+      </div>
+      <div class="poster-row" id="tvshows-list"></div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-head">
+        <h2>Trending anime</h2>
+        <a href="#" class="see-all">See all</a>
+      </div>
+      <div class="poster-row" id="anime-list"></div>
+    </section>
+  </main>
+
   <div class="search-modal" id="search-modal">
-    <div class="search-box">
-      <input
-        type="text"
-        id="search-input"
-        placeholder="Search for a movie or show..."
-        oninput="searchTMDB()"
-      />
-      <button class="search-close" onclick="closeSearchModal()">×</button>
+    <div class="search-panel">
+      <div class="search-input-wrap">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search for a movie or show..."
+          oninput="searchTMDB()"
+        />
+        <button class="search-close" type="button" onclick="closeSearchModal()">×</button>
+      </div>
+      <div class="search-results-grid" id="search-results"></div>
     </div>
-    <div class="results" id="search-results"></div>
   </div>
 </body>
 </html>
