@@ -14,9 +14,9 @@
     <a href="index.html" class="brand">Arjhay<span>TV</span></a>
 
     <nav class="tabs">
-      <button class="tab active" type="button">Movies</button>
-      <button class="tab" type="button">Series</button>
-      <button class="tab" type="button">TV Shows</button>
+      <button class="tab active" type="button" data-tab="home">Home</button>
+      <button class="tab" type="button" data-tab="movies">Movies</button>
+      <button class="tab" type="button" data-tab="tvshows">TV Shows</button>
     </nav>
 
     <div class="nav-icons">
@@ -33,7 +33,7 @@
   </header>
 
   <main class="page-shell">
-    <!-- HERO BANNER -->
+    <!-- HERO -->
     <section class="hero-banner" id="hero-banner">
       <div class="hero-backdrop" id="hero-backdrop"></div>
 
@@ -41,6 +41,7 @@
         <div class="hero-meta">
           <span class="imdb-badge">IMDb</span>
           <span id="hero-rating">7.8 Rating</span>
+          <span id="hero-translation" class="hero-translation">Sub/Dub Available</span>
         </div>
 
         <h1 id="hero-title">Loading...</h1>
@@ -48,7 +49,6 @@
 
         <div class="hero-actions">
           <button id="hero-watch-btn" class="watch-now-btn" type="button">Watch now</button>
-          <button id="hero-add-btn" class="plus-btn" type="button">+</button>
         </div>
       </div>
 
@@ -56,36 +56,39 @@
       <button class="hero-arrow hero-next" type="button" onclick="nextHero()">❯</button>
     </section>
 
-    
 
-    <section class="section-block">
+    <!-- CONTINUE -->
+    <section class="section-block always-visible">
       <div class="section-head">
         <h2>Continue watching</h2>
-        <a href="#" class="see-all">See all</a>
+        <a href="#" class="see-all" data-target="history-list">See all</a>
       </div>
       <div class="poster-row" id="history-list"></div>
     </section>
 
-    <section class="section-block">
+    <!-- MAIN MOVIES / MOVIES TAB / TV SHOWS TAB CONTENT -->
+    <section class="section-block" data-main-section="movies">
       <div class="section-head">
-        <h2>Trending movies</h2>
-        <a href="#" class="see-all">See all</a>
+        <h2 data-main-title>Trending movies</h2>
+        <a href="#" class="see-all" data-target="movies-list">See all</a>
       </div>
       <div class="poster-row" id="movies-list"></div>
     </section>
 
-    <section class="section-block">
+    <!-- TOP RATED -->
+    <section class="section-block" data-main-section="toprated">
       <div class="section-head">
         <h2>Top rated <span class="star">★</span></h2>
-        <a href="#" class="see-all">See all</a>
+        <a href="#" class="see-all" data-target="tvshows-list">See all</a>
       </div>
       <div class="poster-row" id="tvshows-list"></div>
     </section>
 
-    <section class="section-block">
+    <!-- TRENDING ANIME -->
+    <section class="section-block" data-main-section="anime">
       <div class="section-head">
         <h2>Trending anime</h2>
-        <a href="#" class="see-all">See all</a>
+        <a href="#" class="see-all" data-target="anime-list">See all</a>
       </div>
       <div class="poster-row" id="anime-list"></div>
     </section>
