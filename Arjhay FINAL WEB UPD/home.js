@@ -24,6 +24,51 @@ const expandedRows = {
   'history-list': false
 };
 
+// 🔥 ONLY SHOW IMPORTANT PARTS CHANGED (your file is long)
+
+function isAnimeTitle(item) {
+  return item?.original_language === 'ja' || watchDetails?.original_language === 'ja';
+}
+
+function getAllowedServers(mediaType, item = {}) {
+  if (mediaType === 'movie') {
+    return ['vidsrc.cc','vidsrc.in','player.videasy.net','2embed','2embed RU'];
+  }
+
+  if (isAnimeTitle(item)) {
+    return ['vidsrc.cc','vidsrc.in','2Anime','2embed','2embed RU'];
+  }
+
+  return ['vidsrc.cc','vidsrc.in','player.videasy.net','2embed','2embed RU'];
+}
+
+function getPreferredServer(mediaType, requestedServer, item = {}) {
+  const allowed = getAllowedServers(mediaType, item);
+  if (allowed.includes(requestedServer)) return requestedServer;
+  return allowed[0];
+}
+
+function syncServerOptions() {
+  const serverSelect = document.getElementById('server');
+  if (!serverSelect) return;
+
+  const allowed = getAllowedServers(currentItem.media_type, currentItem);
+
+  Array.from(serverSelect.options).forEach(option => {
+    option.hidden = !allowed.includes(option.value);
+  });
+
+  const nextServer = getPreferredServer(
+    currentItem.media_type,
+    currentItem.server || serverSelect.value,
+    currentItem
+  );
+
+  serverSelect.value = nextServer;
+  currentItem.server = nextServer;
+  localStorage.setItem('lastServer', nextServer);
+}
+
 function truncateText(str, maxLength = 28) {
   if (typeof str !== 'string') return '';
   return str.length > maxLength ? `${str.slice(0, maxLength - 1).trim()}…` : str;
@@ -453,10 +498,6 @@ function truncateWords(str, maxLength = 110) {
 }
 
 function updateWatchMeta() {
-  if (!watchDetails) return;
-
-  const isMovie = currentItem.media_type === 'movie';
-
   const titleEl = document.getElementById('watch-title');
   const descEl = document.getElementById('watch-description');
   const posterEl = document.getElementById('watch-poster');
@@ -471,38 +512,37 @@ function updateWatchMeta() {
   const seasonEl = document.getElementById('watch-season-display');
   const episodeEl = document.getElementById('watch-episode-display');
 
+  const details = watchDetails || {};
+  const isMovie = currentItem.media_type === 'movie';
+
   if (titleEl) {
-    titleEl.textContent = watchDetails.title || watchDetails.name || currentItem.title || 'Untitled';
+    titleEl.textContent = details.title || details.name || currentItem.title || 'Untitled';
   }
 
   if (descEl) {
-    descEl.textContent = watchDetails.overview || 'No description available.';
+    descEl.textContent = details.overview || 'No description available.';
   }
 
   if (posterEl) {
-    const posterPath = watchDetails.poster_path || currentItem.poster_path || '';
-    posterEl.src = posterPath ? `${IMG_URL}${posterPath}` : '';
-    posterEl.alt = watchDetails.title || watchDetails.name || 'Poster';
+    const posterPath = details.poster_path || currentItem.poster_path || '';
+    if (posterPath) {
+      posterEl.src = `${IMG_URL}${posterPath}`;
+      posterEl.alt = details.title || details.name || 'Poster';
+    }
   }
 
   if (yearEl) {
-    yearEl.textContent = getYear(watchDetails) || '—';
+    yearEl.textContent = getYear(details) || '—';
   }
 
   if (ratingEl) {
-    ratingEl.textContent = watchDetails.vote_average
-      ? `${watchDetails.vote_average.toFixed(1)} Rating`
-      : 'No rating';
+    ratingEl.textContent = details.vote_average ? `${details.vote_average.toFixed(1)} Rating` : 'No rating';
   }
 
   if (runtimeEl) {
-    if (isMovie) {
-      runtimeEl.textContent = watchDetails.runtime ? `${watchDetails.runtime} min` : 'Movie';
-    } else {
-      runtimeEl.textContent = watchDetails.episode_run_time && watchDetails.episode_run_time[0]
-        ? `${watchDetails.episode_run_time[0]} min`
-        : 'Series';
-    }
+    runtimeEl.textContent = isMovie
+      ? (details.runtime ? `${details.runtime} min` : 'Movie')
+      : (details.episode_run_time && details.episode_run_time[0] ? `${details.episode_run_time[0]} min` : 'Series');
   }
 
   if (typeEl) {
@@ -510,29 +550,29 @@ function updateWatchMeta() {
   }
 
   if (statusEl) {
-    statusEl.textContent = watchDetails.status || (isMovie ? 'Released' : 'Ongoing');
+    statusEl.textContent = details.status || '—';
   }
 
   if (countryEl) {
     if (isMovie) {
-      countryEl.textContent = Array.isArray(watchDetails.production_countries) && watchDetails.production_countries.length
-        ? watchDetails.production_countries.map(item => item.name).join(', ')
+      countryEl.textContent = Array.isArray(details.production_countries) && details.production_countries.length
+        ? details.production_countries.map(c => c.name).join(', ')
         : '—';
     } else {
-      countryEl.textContent = Array.isArray(watchDetails.origin_country) && watchDetails.origin_country.length
-        ? watchDetails.origin_country.join(', ')
+      countryEl.textContent = Array.isArray(details.origin_country) && details.origin_country.length
+        ? details.origin_country.join(', ')
         : '—';
     }
   }
 
   if (genresEl) {
-    genresEl.textContent = Array.isArray(watchDetails.genres) && watchDetails.genres.length
-      ? watchDetails.genres.map(genre => genre.name).join(', ')
+    genresEl.textContent = Array.isArray(details.genres) && details.genres.length
+      ? details.genres.map(g => g.name).join(', ')
       : '—';
   }
 
   if (languageEl) {
-    languageEl.textContent = (watchDetails.original_language || '—').toUpperCase();
+    languageEl.textContent = (details.original_language || '—').toUpperCase();
   }
 
   if (seasonEl) {
@@ -540,30 +580,52 @@ function updateWatchMeta() {
   }
 
   if (episodeEl) {
-    episodeEl.textContent = isMovie
-      ? '—'
-      : (currentItem.episode ? `Episode ${currentItem.episode}` : 'Select episode');
+    episodeEl.textContent = isMovie ? '—' : `Episode ${currentItem.episode || 1}`;
   }
 }
 
 function applyWatchMode() {
   const layout = document.getElementById('watch-layout');
+  const seasonsCard = document.getElementById('watch-seasons-card');
+  const sidebar = document.getElementById('episode-sidebar');
+
   if (!layout) return;
 
-  layout.classList.toggle('movie-mode', currentItem.media_type === 'movie');
+  const isMovie = currentItem.media_type === 'movie';
+  layout.classList.toggle('movie-mode', isMovie);
+
+  if (seasonsCard) {
+    seasonsCard.style.display = isMovie ? 'none' : '';
+  }
+
+  if (sidebar) {
+    sidebar.style.display = isMovie ? 'none' : '';
+  }
 }
 
 async function fetchWatchDetails(item) {
   const type = item.media_type === 'movie' ? 'movie' : 'tv';
   const res = await fetch(`${BASE_URL}/${type}/${item.id}?api_key=${API_KEY}`);
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
   const data = await res.json();
 
-  watchDetails = data;
-  currentItem.title = data.title || data.name || currentItem.title;
-  currentItem.poster_path = data.poster_path || currentItem.poster_path;
+  if (!data || data.success === false) {
+    throw new Error('TMDB returned no valid data');
+  }
 
-  updateWatchMeta();
-  applyWatchMode();
+  watchDetails = data;
+  currentItem.title = data.title || data.name || currentItem.title || 'Untitled';
+  currentItem.poster_path = data.poster_path || currentItem.poster_path || '';
+
+
+
+  syncServerOptions();
+updateWatchMeta();
+applyWatchMode();
 }
 
 function changeServer() {
@@ -572,7 +634,8 @@ function changeServer() {
 
   if (!frame || !serverSelect || !currentItem.id) return;
 
-  const server = serverSelect.value;
+  const server = getPreferredServer(currentItem.media_type, serverSelect.value, currentItem);
+serverSelect.value = server;
   currentItem.server = server;
   localStorage.setItem('lastServer', server);
 
@@ -813,53 +876,6 @@ async function displayEpisodes(item) {
   filterEpisodeCards();
 }
 
-async function initWatchPage() {
-  const params = new URLSearchParams(window.location.search);
-  const id = Number(params.get('id'));
-  const mediaType = params.get('media_type');
-  const title = params.get('title') || '';
-  const poster = params.get('poster') || '';
-  const season = params.get('season') ? Number(params.get('season')) : null;
-  const episode = params.get('episode') ? Number(params.get('episode')) : null;
-  const server = params.get('server') || localStorage.getItem('lastServer') || 'vidsrc.cc';
-
-  currentItem = {
-    id,
-    media_type: mediaType,
-    title,
-    poster_path: poster,
-    season,
-    episode,
-    server
-  };
-
-  const serverSelect = document.getElementById('server');
-  if (serverSelect) {
-    serverSelect.value = server;
-    serverSelect.addEventListener('change', () => {
-      currentItem.server = serverSelect.value;
-      addToHistory(currentItem);
-      changeServer();
-    });
-  }
-
-  const filterInput = document.getElementById('episode-filter');
-  if (filterInput) {
-    filterInput.addEventListener('input', filterEpisodeCards);
-  }
-
-  await fetchWatchDetails(currentItem);
-  addToHistory(currentItem);
-
-  if (mediaType === 'tv') {
-    await loadSeasons(currentItem);
-    await displayEpisodes(currentItem);
-  } else {
-    applyWatchMode();
-  }
-
-  changeServer();
-}
 
 /* ---------- SEARCH ---------- */
 async function searchTMDB() {
@@ -931,11 +947,11 @@ async function initHomePage() {
 async function initWatchPage() {
   const params = new URLSearchParams(window.location.search);
   const id = Number(params.get('id'));
-  const mediaType = params.get('media_type');
+  const mediaType = params.get('media_type') || 'movie';
   const title = params.get('title') || '';
   const poster = params.get('poster') || '';
-  const season = params.get('season') ? Number(params.get('season')) : null;
-  const episode = params.get('episode') ? Number(params.get('episode')) : null;
+  const season = params.get('season') ? Number(params.get('season')) : 1;
+  const episode = params.get('episode') ? Number(params.get('episode')) : 1;
   const server = params.get('server') || localStorage.getItem('lastServer') || 'vidsrc.cc';
 
   currentItem = {
@@ -950,7 +966,9 @@ async function initWatchPage() {
 
   const serverSelect = document.getElementById('server');
   if (serverSelect) {
-    serverSelect.value = server;
+    serverSelect.value = getPreferredServer(mediaType, server, currentItem);
+currentItem.server = serverSelect.value;
+syncServerOptions();
     serverSelect.addEventListener('change', () => {
       currentItem.server = serverSelect.value;
       addToHistory(currentItem);
@@ -958,18 +976,34 @@ async function initWatchPage() {
     });
   }
 
-  addToHistory(currentItem);
-
-  if (mediaType === 'tv') {
-    await loadSeasons(currentItem);
-    await displayEpisodes(currentItem);
+  const filterInput = document.getElementById('episode-filter');
+  if (filterInput) {
+    filterInput.addEventListener('input', filterEpisodeCards);
   }
 
-  changeServer();
+  try {
+    await fetchWatchDetails(currentItem);
 
-  if (mediaType === 'movie') {
-  document.querySelector('.watch-layout').classList.add('movie-mode');
-}
+    if (mediaType === 'tv') {
+      await loadSeasons(currentItem);
+      await displayEpisodes(currentItem);
+    } else {
+      applyWatchMode();
+    }
+
+    updateWatchMeta();
+    addToHistory(currentItem);
+    changeServer();
+  } catch (error) {
+    console.error('Watch page load error:', error);
+
+    const titleEl = document.getElementById('watch-title');
+    const descEl = document.getElementById('watch-description');
+
+    if (titleEl) titleEl.textContent = currentItem.title || 'Unable to load title';
+    if (descEl) descEl.textContent = 'Failed to load full details. Try refreshing or opening another server.';
+    changeServer();
+  }
 }
 
 async function init() {
