@@ -239,13 +239,15 @@ function createPosterCard(item, isHistory = false) {
   card.innerHTML = `
     <div class="poster-thumb">
       <img src="${IMG_URL}${item.poster_path || item.backdrop_path}" alt="${item.title || item.name || ''}">
-      <div class="poster-body">
-        <div class="poster-title">${truncateText(item.title || item.name || '', 50)}</div>
-        <div class="poster-sub">${subText || ''}</div>
-        <div class="poster-actions">
-          <button class="mini-watch-btn" type="button">${isHistory ? 'Continue' : 'Watch now'}</button>
-        </div>
-      </div>
+      <div class="poster-badges">
+  <span class="poster-badge">cc</span>
+  <span class="poster-badge">${Math.floor(item.vote_average || 10)}</span>
+</div>
+</div>
+
+<div class="poster-title">
+  ${truncateText(item.title || item.name || '', 40)}
+</div>
     </div>
   `;
 
