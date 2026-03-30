@@ -14,73 +14,44 @@
     <header class="top-nav">
       <a href="index.html" class="brand">Arjhay<span>TV</span></a>
 
-      
-
       <div class="nav-icons">
-        <button type="button" class="icon-btn" onclick="openSearchModal()" aria-label="Search">
+        <button type="button" class="icon-btn" onclick="openSearchModal()">
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
       </div>
     </header>
 
-    <section class="watch-section">
-      <div class="player-container">
-        <iframe
-          id="modal-video"
-          frameborder="0"
-          allow="autoplay; fullscreen; encrypted-media"
-          allowfullscreen
-        ></iframe>
+    <section class="watch-layout">
+
+      <!-- LEFT -->
+      <div>
+        <div class="player-container">
+          <iframe id="modal-video" allowfullscreen></iframe>
+        </div>
+
+        <!-- INFO -->
+        <div class="watch-info">
+          <h1 id="watch-title">Loading...</h1>
+          <p id="watch-description">Loading...</p>
+
+          <!-- SERVER -->
+          <div class="server-box">
+            <label>Server</label>
+            <select id="server"></select>
+          </div>
+        </div>
+
+        <!-- SEASONS -->
+        <div id="season-container"></div>
       </div>
 
-      <div class="controls">
-        <div class="control-panel server-selector" style="flex:1; min-width:220px;">
-          <label for="server">Change Server:</label>
-          <select id="server">
-            <option value="vidsrc.cc">Vidsrc.cc</option>
-            <option value="vidsrc.in">Vidsrc.in</option>
-            <option value="player.videasy.net">Player.Videasy.net</option>
-            <option value="2embed">2Embed</option>
-            <option value="2embed RU">2Embed RU</option>
-            <option value="2Anime">2Anime</option>
-            <option value="moviesapi.club animetv">MoviesAPI Club TV</option>
-            <option value="moviesapi.club movie">MoviesAPI Club Movie</option>
-            <option value="multiembed.mov">MultiEmbed</option>
-            <option value="apimocine-tv">ApiMocine TV</option>
-            <option value="apimocine-movie">ApiMocine Movie</option>
-          </select>
-        </div>
+      <!-- RIGHT EPISODES -->
+      <aside id="episode-sidebar">
+        <select id="season-select"></select>
+        <div id="episode-list"></div>
+      </aside>
 
-        <div class="control-panel season-selector" style="flex:1; min-width:180px;">
-          <label for="season-select">Select Season:</label>
-          <select id="season-select"></select>
-        </div>
-
-        <div class="control-panel episode-selector">
-          <label>Episodes:</label>
-          <div id="episode-list"></div>
-        </div>
-      </div>
     </section>
-
-    <footer>
-      <p>&copy; 2025 Arjhay TV. All rights reserved.</p>
-    </footer>
-  </div>
-
-  <div class="search-modal" id="search-modal">
-    <div class="search-panel">
-      <div class="search-input-wrap">
-        <input
-          type="text"
-          id="search-input"
-          placeholder="Search for a movie or show..."
-          oninput="searchTMDB()"
-        />
-        <button class="search-close" type="button" onclick="closeSearchModal()">×</button>
-      </div>
-      <div class="search-results-grid" id="search-results"></div>
-    </div>
   </div>
 </body>
 </html>
