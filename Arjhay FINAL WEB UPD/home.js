@@ -32,11 +32,11 @@ function isAnimeTitle(item) {
 
 function getAllowedServers(mediaType, item = {}) {
   if (mediaType === 'movie') {
-    return ['vidsrc.cc','vidsrc.in','player.videasy.net','2embed','2embed RU'];
+    return ['multiembed.mov','vidsrc.cc','vidsrc.in','player.videasy.net','2embed','2embed RU','moviesapi.club movie','apimocine movie'];
   }
 
   if (isAnimeTitle(item)) {
-    return ['vidsrc.cc','vidsrc.in','2Anime','2embed','2embed RU'];
+    return ['multiembed.mov','vidsrc.cc','vidsrc.in','2Anime','2embed','2embed RU','moviesapi.club animetv','apimocine tv'];
   }
 
   return ['vidsrc.cc','vidsrc.in','player.videasy.net','2embed','2embed RU'];
