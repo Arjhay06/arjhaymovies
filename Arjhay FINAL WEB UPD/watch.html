@@ -4,104 +4,83 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arjhay TV - Watch</title>
-  <!-- Fonts & Icons -->
+
+  <link rel="stylesheet" href="home.css" />
+  <script defer src="home.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Orbitron:wght@600&display=swap" rel="stylesheet">
-  <!-- Shared CSS -->
-   <link rel="stylesheet" href="home.css">
-   <script defer src="home.js"></script>
 </head>
 <body>
   <div class="main">
-    <!-- Topbar with Search -->
-    <div class="topbar">
-      <div class="logo">
-        <a href="index.html" class="logo-link">
-          <span class="logo-text">Arjhay<span class="small-tv">TV</span></span>
-        </a>
-      </div>
-      <div class="topbar-center">
-        <input type="text" class="search-bar" placeholder="Search Anime or Movie..." onfocus="openSearchModal()" />
-      </div>
-      <div class="topbar-links">
-        <a href="index.html">Home</a>
-        <a href="#">Contact</a>
-        <a href="#">Disclaimer</a>
-      </div>
-    </div>
+    <header class="top-nav">
+      <a href="index.html" class="brand">Arjhay<span>TV</span></a>
 
-    <!-- Watch Section -->
-    <section class="watch-section" style="flex:1; padding:2rem; display:flex; flex-direction:column; gap:1.5rem;">
+      
 
-      <!-- Video Player -->
+      <div class="nav-icons">
+        <button type="button" class="icon-btn" onclick="openSearchModal()" aria-label="Search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
+    </header>
+
+    <section class="watch-section">
       <div class="player-container">
-  <iframe
-   id="modal-video"
-   frameborder="0"
-   allow="autoplay; fullscreen; encrypted-media"
-   allowfullscreen
-   webkitallowfullscreen
-   mozallowfullscreen
-   allow="fullscreen"
-   style="width:100%; height:480px; border-radius:10px;"
- ></iframe>
-</div>
+        <iframe
+          id="modal-video"
+          frameborder="0"
+          allow="autoplay; fullscreen; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      </div>
 
-      <!-- Controls: Server, Season, Episodes -->
-      <div class="controls" style="display:flex; gap:1rem; align-items:flex-start; justify-content:center; flex-wrap:wrap;">
-
-        <!-- Server Selector -->
-        <div class="control-panel server-selector" style="flex:1; min-width:200px;">
-          <label for="server" style="color:#ddd; display:block; margin-bottom:0.5rem;">Change Server:</label>
-          <select id="server" onchange="changeServer()" style="width:100%; padding:0.5rem; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #444;">
-            <option value="vidsrc.cc">Vidsrc.cc (Anime/Movie)</option>
-            <option value="vidsrc.in">Vidsrc.in (Anime/Movie)</option>
-            <option value="player.videasy.net">Player.Videasy.net (Anime/Movie)</option>
-            <option value="2embed">2Embed (TV/Movie)</option>
-            <option value="2embed RU">2Embed RU (TV/Anime)</option>
-            <option value="2Anime">2Anime (Anime)</option>
-            <option value="'moviesapi.club animetv">MoviesAPI Club (Anime/TV)</option>
-            <option value="'moviesapi.club movie">MoviesAPI Club (Movie)</option>
-            <option value="multiembed.mov">MultiEmbed (Anime/Movie)</option>
-            <option value="apimocine tv">ApiMocine (TV/Anime)</option>
-            <option value="apimocine movie">ApiMocine (Movie)</option>
-            
-            
+      <div class="controls">
+        <div class="control-panel server-selector" style="flex:1; min-width:220px;">
+          <label for="server">Change Server:</label>
+          <select id="server">
+            <option value="vidsrc.cc">Vidsrc.cc</option>
+            <option value="vidsrc.in">Vidsrc.in</option>
+            <option value="player.videasy.net">Player.Videasy.net</option>
+            <option value="2embed">2Embed</option>
+            <option value="2embed RU">2Embed RU</option>
+            <option value="2Anime">2Anime</option>
+            <option value="moviesapi.club animetv">MoviesAPI Club TV</option>
+            <option value="moviesapi.club movie">MoviesAPI Club Movie</option>
+            <option value="multiembed.mov">MultiEmbed</option>
+            <option value="apimocine-tv">ApiMocine TV</option>
+            <option value="apimocine-movie">ApiMocine Movie</option>
           </select>
         </div>
 
-        <!-- Season Selector -->
-        <div class="control-panel season-selector" style="flex:1; min-width:150px;">
-          <label for="season-select" style="color:#ddd; display:block; margin-bottom:0.5rem;">Select Season:</label>
-          <select id="season-select" style="width:100%; padding:0.5rem; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #444;"></select>
+        <div class="control-panel season-selector" style="flex:1; min-width:180px;">
+          <label for="season-select">Select Season:</label>
+          <select id="season-select"></select>
         </div>
 
-        <!-- Episode List -->
-        <div class="control-panel episode-selector" style="flex:2; min-width:250px;">
-          <label style="color:#ddd; display:block; margin-bottom:0.5rem;">Episodes:</label>
-          <div id="episode-list" style="max-height:300px; overflow-y:auto; border:1px solid #444; padding:0.5rem; border-radius:px;">
-            <!-- episodes injected here -->
-          </div>
+        <div class="control-panel episode-selector">
+          <label>Episodes:</label>
+          <div id="episode-list"></div>
         </div>
-
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer style="text-align:center; padding:1rem; background:#111; color:#aaa;">
+    <footer>
       <p>&copy; 2025 Arjhay TV. All rights reserved.</p>
-      <div class="footer-links"><a href="#" style="color:#888;">Created By: Arjhay</a></div>
     </footer>
   </div>
 
-  <!-- Search Modal -->
   <div class="search-modal" id="search-modal">
-    <div class="search-box">
-      <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
-      <button class="search-close" onclick="closeSearchModal()">×</button>
+    <div class="search-panel">
+      <div class="search-input-wrap">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search for a movie or show..."
+          oninput="searchTMDB()"
+        />
+        <button class="search-close" type="button" onclick="closeSearchModal()">×</button>
+      </div>
+      <div class="search-results-grid" id="search-results"></div>
     </div>
-    <div class="results" id="search-results"></div>
   </div>
 </body>
 </html>
