@@ -119,6 +119,7 @@ body {
   color: rgba(255,255,255,0.42);
   text-decoration: none;
   font-size: 14px;
+  cursor: pointer;
 }
 
 .star {
@@ -353,7 +354,6 @@ body {
   z-index: 3;
 }
 
-/* progress label for continue watching */
 .progress-note {
   display: inline-block;
   margin-top: 2px;
@@ -368,101 +368,441 @@ body {
   flex-direction: column;
 }
 
-.watch-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 1.5rem;
+.watch-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 285px;
+  gap: 8px;
+  padding: 4px 18px 18px;
+  align-items: start;
 }
 
-.player-container {
-  width: 100%;
+.watch-left {
+  min-width: 0;
   max-width: 1180px;
+  width: 100%;
   margin: 0 auto;
-  background: #000;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
 }
 
-#modal-video {
+.watch-left {
+  min-width: 0;
+  margin-right: 0;
+}
+
+.watch-right,
+.watch-player-wrap {
+  margin-top: 0;
+}
+
+.watch-player-wrap {
   width: 100%;
-  height: 72vh;
+  margin: 0;
+  background: #050505;
+  border-radius: 12px;
+  padding: 2px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.watch-player-wrap #modal-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 0;
+  max-height: 520px;
+  background: #000;
   border: none;
+  border-radius: 14px;
   display: block;
-  background: #000;
 }
 
-.controls {
-  width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
 
-.control-panel,
-.server-selector,
-.season-selector,
-.episode-selector {
-  background: var(--panel);
-  border: 1px solid var(--border);
+.watch-detail-card {
+  margin-top: 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 16px;
-  padding: 1rem;
+  padding: 12px 14px;
 }
 
-.control-panel label,
-.server-selector label,
-.season-selector label {
-  display: block;
-  color: #ddd;
-  margin-bottom: 0.5rem;
-  font-size: 14px;
+.watch-detail-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 10px;
 }
 
-.control-panel select,
-.server-selector select,
-.season-selector select,
-#season-select,
-#server {
-  width: 100%;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
+.watch-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.watch-title-wrap h1 {
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 800;
+  margin-bottom: 6px;
   color: #fff;
-  padding: 0.75rem 0.9rem;
+}
+
+.watch-mini-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: rgba(255,255,255,0.75);
+  font-size: 11px;
+}
+
+.watch-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(0,231,212,0.12);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.watch-server-wrap {
+  width: 205px;
+  flex-shrink: 0;
+}
+
+.watch-server-wrap label {
+  display: block;
+  font-size: 12px;
+  color: rgba(255,255,255,0.72);
+  margin-bottom: 7px;
+}
+
+.watch-server-wrap select,
+#season-select {
+  width: 100%;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff;
+  padding: 10px 12px;
   border-radius: 10px;
   outline: none;
+  font-size: 13px;
 }
 
-.episode-selector {
-  flex: 2;
-  min-width: 280px;
+.watch-description {
+  color: rgba(255,255,255,0.72);
+  line-height: 1.45;
+  font-size: 11px;
+  margin-bottom: 10px;
+  max-width: 980px;
 }
 
-#episode-list {
-  max-height: 320px;
-  overflow-y: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+.watch-info-grid {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
 }
 
-#episode-list button {
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+.watch-poster-box {
+  width: 74px;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.watch-poster-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.watch-meta-box {
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.watch-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px 14px;
+}
+
+.meta-label {
+  display: block;
+  font-size: 10px;
+  color: rgba(255,255,255,0.42);
+  margin-bottom: 2px;
+}
+
+.watch-meta-grid strong {
+  display: block;
   color: #fff;
-  padding: 0.6rem 0.85rem;
-  border-radius: 10px;
-  cursor: pointer;
+  line-height: 1.35;
+  word-break: break-word;
+  font-size: 11px;
 }
 
-#episode-list button.active-episode {
-  background: var(--accent);
-  color: #000;
+.watch-seasons-card {
+  width: 100%;
+  max-width: 1180px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.watch-seasons-card .section-head {
+  margin-bottom: 10px;
+}
+
+.watch-seasons-card h2 {
+  font-size: 13px;
+}
+
+.season-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.season-card {
+  position: relative;
+  min-height: 62px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+  cursor: pointer;
+  padding: 0;
+}
+
+.season-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.season-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.28));
+}
+
+.season-card-body {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+}
+
+.season-card-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.season-card-sub {
+  margin-top: 2px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.74);
+}
+
+.watch-detail-top {
+  margin-bottom: 8px;
+}
+
+.watch-seasons-card .section-head {
+  margin-bottom: 8px;
+}
+
+
+.season-card.active {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.watch-right {
+  position: sticky;
+  top: 76px;
+  align-self: start;
+  width: 285px;
+  max-height: calc(100vh - 88px);
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.watch-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.episode-sidebar-top {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.episode-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 0 10px;
+}
+
+.episode-search-box i {
+  color: rgba(255,255,255,0.42);
+  font-size: 12px;
+}
+
+#episode-filter {
+  width: 100%;
+  min-height: 40px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 13px;
+}
+
+.episode-list-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.episode-card {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 9px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 6px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.episode-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.14);
+}
+
+.episode-card.active-episode {
+  background: rgba(114,72,201,0.24);
+  border-color: rgba(170,126,255,0.68);
+  box-shadow: inset 0 0 0 1px rgba(170,126,255,0.16);
+}
+
+.episode-thumb {
+  position: relative;
+  width: 92px;
+  height: 62px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #181818;
+}
+
+.episode-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.episode-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  background: rgba(0,0,0,0.82);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 9px;
   font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 7px;
+}
+
+.episode-card-body {
+  min-width: 0;
+}
+
+.episode-card-title {
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.episode-card-desc {
+  color: rgba(255,255,255,0.46);
+  font-size: 10px;
+  line-height: 1.35;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.episode-card-date {
+  font-size: 10px;
+  color: rgba(255,255,255,0.34);
+}
+
+.empty-episodes {
+  color: rgba(255,255,255,0.48);
+  font-size: 13px;
+  text-align: center;
+  padding: 18px 10px;
+}
+
+.watch-layout.movie-mode {
+  display: block;
+  padding: 10px 18px 22px;
+}
+
+.watch-layout.movie-mode .watch-right,
+.watch-layout.movie-mode #watch-seasons-card,
+.watch-layout.movie-mode #season-info-item,
+.watch-layout.movie-mode #episode-info-item {
+  display: none !important;
+}
+
+.watch-layout.movie-mode .watch-left {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.watch-layout.movie-mode .watch-player-wrap,
+.watch-layout.movie-mode .watch-detail-card {
+  width: 100%;
+  max-width: 1180px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ---------- Search ---------- */
@@ -541,7 +881,7 @@ footer {
   background: #070707;
 }
 
-/* ---------- Mobile ---------- */
+
 @media (max-width: 900px) {
   .tabs {
     display: none;
@@ -573,21 +913,6 @@ footer {
     height: 110px;
   }
 
-  #modal-video {
-    height: 42vh;
-  }
-
-  .controls {
-    flex-direction: column;
-  }
-
-  .control-panel,
-  .server-selector,
-  .season-selector,
-  .episode-selector {
-    width: 100%;
-  }
-
   .hero-content {
     padding: 34px 22px;
   }
@@ -595,14 +920,19 @@ footer {
   #hero-overview {
     font-size: 13px;
   }
+
+  .watch-detail-top {
+    flex-direction: column;
+  }
+
+  .watch-server-wrap {
+    width: 100%;
+  }
+
 }
 
 .tab-section.hidden-section {
   display: none;
-}
-
-.see-all {
-  cursor: pointer;
 }
 
 .poster-row.expanded {
@@ -628,434 +958,4 @@ footer {
 .hero-actions .plus-btn,
 .poster-actions .mini-plus-btn {
   display: none !important;
-}
-
-/* ================= WATCH PAGE REDESIGN ================= */
-
-.watch-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
-  gap: 18px;
-  padding: 18px 20px 28px;
-  align-items: start;
-}
-
-.watch-left {
-  min-width: 0;
-}
-
-.watch-player-wrap {
-  background: #050505;
-  border-radius: 24px;
-  padding: 10px;
-  box-shadow: 0 18px 40px rgba(0,0,0,0.55);
-}
-
-.watch-player-wrap #modal-video {
-  width: 100%;
-  height: 68vh;
-  min-height: 420px;
-  background: #000;
-  border: none;
-  border-radius: 18px;
-  display: block;
-}
-
-.watch-detail-card {
-  margin-top: 16px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 20px;
-  padding: 18px;
-}
-
-.watch-detail-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 18px;
-  margin-bottom: 14px;
-}
-
-.watch-title-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.watch-title-wrap h1 {
-  font-size: 34px;
-  line-height: 1.08;
-  font-weight: 800;
-  margin-bottom: 10px;
-  color: #fff;
-}
-
-.watch-mini-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  color: rgba(255,255,255,0.75);
-  font-size: 13px;
-}
-
-.watch-type-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(0,231,212,0.12);
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 11px;
-}
-
-.watch-server-wrap {
-  width: 240px;
-  flex-shrink: 0;
-}
-
-.watch-server-wrap label {
-  display: block;
-  font-size: 13px;
-  color: rgba(255,255,255,0.7);
-  margin-bottom: 8px;
-}
-
-.watch-server-wrap select,
-#season-select {
-  width: 100%;
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #fff;
-  padding: 12px 14px;
-  border-radius: 12px;
-  outline: none;
-}
-
-.watch-description {
-  color: rgba(255,255,255,0.78);
-  line-height: 1.6;
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-
-.watch-info-grid {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: 16px;
-}
-
-.watch-poster-box {
-  border-radius: 16px;
-  overflow: hidden;
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-.watch-poster-box img {
-  width: 100%;
-  height: 100%;
-  min-height: 230px;
-  object-fit: cover;
-  display: block;
-}
-
-.watch-meta-box {
-  background: #0f0f0f;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.watch-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0,1fr));
-  gap: 14px 18px;
-}
-
-.meta-label {
-  display: block;
-  font-size: 12px;
-  color: rgba(255,255,255,0.48);
-  margin-bottom: 4px;
-}
-
-.watch-meta-grid strong {
-  display: block;
-  color: #fff;
-  line-height: 1.45;
-  word-break: break-word;
-}
-
-.watch-seasons-card {
-  margin-top: 16px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 20px;
-  padding: 16px;
-}
-
-.season-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-}
-
-.season-card {
-  position: relative;
-  min-height: 100px;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  overflow: hidden;
-  background: #111;
-  cursor: pointer;
-  padding: 0;
-}
-
-.season-card img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.season-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.88), rgba(0,0,0,0.25));
-}
-
-.season-card-body {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
-  z-index: 2;
-}
-
-.season-card-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.season-card-sub {
-  margin-top: 4px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.75);
-}
-
-.season-card.active {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.watch-right {
-  position: sticky;
-  top: 88px;
-  max-height: calc(100vh - 108px);
-  overflow: hidden;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 20px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-}
-
-.episode-sidebar-top {
-  display: grid;
-  grid-template-columns: 110px minmax(0,1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.episode-search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 0 10px;
-}
-
-.episode-search-box i {
-  color: rgba(255,255,255,0.42);
-  font-size: 12px;
-}
-
-#episode-filter {
-  width: 100%;
-  min-height: 42px;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #fff;
-}
-
-.episode-list-premium {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-.episode-card {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 10px;
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 14px;
-  padding: 7px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.episode-card:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255,255,255,0.14);
-}
-
-.episode-card.active-episode {
-  background: rgba(114, 72, 201, 0.26);
-  border-color: rgba(170, 126, 255, 0.7);
-  box-shadow: inset 0 0 0 1px rgba(170,126,255,0.24);
-}
-
-.episode-thumb {
-  position: relative;
-  width: 96px;
-  height: 68px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #181818;
-}
-
-.episode-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.episode-badge {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  background: rgba(0,0,0,0.82);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: 999px;
-  padding: 3px 7px;
-}
-
-.episode-card-body {
-  min-width: 0;
-}
-
-.episode-card-title {
-  font-size: 13px;
-  line-height: 1.25;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 4px;
-}
-
-.episode-card-desc {
-  color: rgba(255,255,255,0.5);
-  font-size: 11px;
-  line-height: 1.35;
-  margin-bottom: 4px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-
-.episode-card-date {
-  font-size: 10px;
-  color: rgba(255,255,255,0.36);
-}
-
-.empty-episodes {
-  color: rgba(255,255,255,0.48);
-  font-size: 13px;
-  text-align: center;
-  padding: 18px 10px;
-}
-
-.watch-layout.movie-mode {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.watch-layout.movie-mode .watch-right,
-.watch-layout.movie-mode #watch-seasons-card,
-.watch-layout.movie-mode #season-info-item,
-.watch-layout.movie-mode #episode-info-item {
-  display: none !important;
-}
-
-@media (max-width: 1100px) {
-  .watch-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .watch-right {
-    position: static;
-    max-height: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .watch-layout {
-    padding: 14px;
-  }
-
-  .watch-player-wrap #modal-video {
-    height: 42vh;
-    min-height: 250px;
-  }
-
-  .watch-detail-top {
-    flex-direction: column;
-  }
-
-  .watch-server-wrap {
-    width: 100%;
-  }
-
-  .watch-title-wrap h1 {
-    font-size: 24px;
-  }
-
-  .watch-info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .watch-meta-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .episode-sidebar-top {
-    grid-template-columns: 1fr;
-  }
-
-  .episode-card {
-    grid-template-columns: 84px minmax(0,1fr);
-  }
-
-  .episode-thumb {
-    width: 84px;
-    height: 62px;
-  }
 }
