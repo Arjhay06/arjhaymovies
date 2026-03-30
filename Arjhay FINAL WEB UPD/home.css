@@ -1,1303 +1,493 @@
-/* Base Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+const API_KEY = 'a1e72fd93ed59f56e6332813b9f8dcae';
+const BASE_URL = 'https://api.themoviedb.org/3';
+const IMG_URL = 'https://image.tmdb.org/t/p/original';
+
+let currentItem = {};
+let currentSeasons = [];
+let heroItems = [];
+let heroIndex = 0;
+let heroTimer = null;
+
+function truncateText(str, maxLength = 28) {
+  if (typeof str !== 'string') return '';
+  return str.length > maxLength ? `${str.slice(0, maxLength - 1).trim()}…` : str;
 }
 
-/* Enable horizontal scrolling & momentum on mobile */
-#search-results {
-  display: flex;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  gap: 1rem;
-  padding: 1rem;
+function isWatchPage() {
+  const page = window.location.pathname.split('/').pop();
+  return page === 'watch.html' || page === 'watch';
 }
 
-/* Each poster stays a fixed width, no stretching */
-#search-results .result-item,
-#search-results .result-item img {
-  flex: 0 0 auto;
-}
-
-
-/* Shrink images on phones */
-@media (max-width: 600px) {
-  #search-results .result-item {
-    width: 100vw;         /* about 2 per screen */
-    max-width: 150px;    /* don’t go wider */
+function openSearchModal() {
+  const modal = document.getElementById('search-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  const input = document.getElementById('search-input');
+  if (input) {
+    input.value = '';
+    input.focus();
   }
-  #search-results .result-item img {
-    width: 100%;
-    height: auto;
-    border-radius: 4px;
+  const results = document.getElementById('search-results');
+  if (results) results.innerHTML = '';
+}
+
+function closeSearchModal() {
+  const modal = document.getElementById('search-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  const results = document.getElementById('search-results');
+  if (results) results.innerHTML = '';
+}
+
+window.openSearchModal = openSearchModal;
+window.closeSearchModal = closeSearchModal;
+
+async function fetchTrending(type) {
+  const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
+  const data = await res.json();
+  return data.results || [];
+}
+
+async function fetchTopRatedTV() {
+  const res = await fetch(`${BASE_URL}/tv/top_rated?api_key=${API_KEY}`);
+  const data = await res.json();
+  return (data.results || []).map(item => ({ ...item, media_type: 'tv' }));
+}
+
+async function fetchTrendingAnime() {
+  let all = [];
+  for (let page = 1; page <= 3; page += 1) {
+    const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
+    const data = await res.json();
+    const filtered = (data.results || []).filter(
+      item => item.original_language === 'ja' &&
+      Array.isArray(item.genre_ids) &&
+      item.genre_ids.includes(16)
+    );
+    all = all.concat(filtered.map(item => ({ ...item, media_type: 'tv' })));
   }
+  return all;
 }
 
-/* (Optional) hide your arrow buttons on mobile if you’ll swipe instead */
-@media (max-width: 600px) {
-  .search-arrow {
-    display: none;
+function getYear(item) {
+  const raw = item.release_date || item.first_air_date || '';
+  return raw ? raw.slice(0, 4) : '';
+}
+
+function goToWatch(item) {
+  const params = new URLSearchParams({
+    id: item.id,
+    media_type: item.media_type || 'movie',
+    title: item.title || item.name || '',
+    poster: item.poster_path || '',
+    season: item.season || '',
+    episode: item.episode || '',
+    server: item.server || localStorage.getItem('lastServer') || 'vidsrc.cc'
+  });
+
+  window.location.href = `watch.html?${params.toString()}`;
+}
+
+/* ---------- HERO ---------- */
+function renderHero() {
+  const item = heroItems[heroIndex];
+  if (!item) return;
+
+  const backdrop = document.getElementById('hero-backdrop');
+  const title = document.getElementById('hero-title');
+  const overview = document.getElementById('hero-overview');
+  const rating = document.getElementById('hero-rating');
+  const watchBtn = document.getElementById('hero-watch-btn');
+
+  if (!backdrop || !title || !overview || !rating || !watchBtn) return;
+
+  backdrop.style.backgroundImage = `url(${IMG_URL}${item.backdrop_path || item.poster_path})`;
+  title.textContent = item.title || item.name || 'Untitled';
+  overview.textContent = truncateText(item.overview || 'No description available.', 220);
+  rating.textContent = item.vote_average ? `${item.vote_average.toFixed(1)} Rating` : '7.0 Rating';
+
+  watchBtn.onclick = () => goToWatch(item);
+}
+
+function nextHero() {
+  if (!heroItems.length) return;
+  heroIndex = (heroIndex + 1) % heroItems.length;
+  renderHero();
+}
+
+function prevHero() {
+  if (!heroItems.length) return;
+  heroIndex = (heroIndex - 1 + heroItems.length) % heroItems.length;
+  renderHero();
+}
+
+window.nextHero = nextHero;
+window.prevHero = prevHero;
+
+function startHeroAuto() {
+  if (heroTimer) clearInterval(heroTimer);
+  heroTimer = setInterval(() => {
+    nextHero();
+  }, 6000);
+}
+
+/* ---------- POSTER ROWS ---------- */
+function buildProgressLabel(item) {
+  if (item.media_type === 'tv' && item.season && item.episode) {
+    return `Continue S${item.season} • E${item.episode}`;
   }
+  if (item.media_type === 'movie') {
+    return 'Continue movie';
+  }
+  return '';
 }
 
+function createPosterCard(item, isHistory = false) {
+  const card = document.createElement('article');
+  card.className = 'poster-card';
 
-/* ── Completely remove curves from all poster cards ── */
-.card {
-  border-radius: 0 !important;
-  overflow: hidden;           /* keep the image cropped to the rect */
-}
+  const year = getYear(item);
+  const subText = isHistory ? buildProgressLabel(item) || year : year;
 
-.card img {
-  border-radius: 0 !important;
-}
+  card.innerHTML = `
+    <div class="poster-thumb">
+      <img src="${IMG_URL}${item.poster_path || item.backdrop_path}" alt="${item.title || item.name || ''}">
+      <div class="poster-body">
+        <div class="poster-title">${truncateText(item.title || item.name || '', 20)}</div>
+        <div class="poster-sub">${subText || ''}</div>
+        <div class="poster-actions">
+          <button class="mini-watch-btn" type="button">${isHistory ? 'Continue' : 'Watch now'}</button>
+          <button class="mini-plus-btn" type="button">+</button>
+        </div>
+      </div>
+    </div>
+  `;
 
-.card:hover {
-  border-radius: 0 !important;  /* ensure hover doesn’t re-add rounding */
-}
-
-.history-item {
-  position: relative;
-}
-
-/* ← Add this at the end of home.css → */
-
-/* Style & layer the slider arrows */
-.arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 2rem;
-  cursor: pointer;
-  z-index: 5;          /* make sure it's above the ::before overlay */
-  padding: 0.5rem 1rem;
-  border-radius: 50%;
-}
-
-.arrow.prev {
-  left: 10px;
-}
-
-.arrow.next {
-  right: 10px;
-}
-
-
-
-
-/* Slider arrows on top of gradient overlay */
-.nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  border: none;
-  color: white;
-  font-size: 2rem;
-  cursor: pointer;
-  z-index: 3;          /* raised above the ::before overlay */
-  padding: 0.5rem 1rem;
-  border-radius: 50%;
-}
-
-.nav.prev {
-  left: 10px;
-}
-
-.nav.next {
-  right: 10px;
-}
-
-.remove-btn {
-  background: #ff4d4f;
-  border: none;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.remove-btn:hover {
-  background: #ff7875;
-}
-
-
-/* Make the episode list scrollable and hide pagination */
-.episode-selector .episode-list {
-  max-height: 400px;    /* adjust as needed */
-  overflow-y: auto;
-}
-.episode-selector #episode-pagination {
-  display: none;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  background: #0f0f0f;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10000;
-  padding: 1rem;
-  background: #161616;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.topbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-/* Responsive Search Bar */
-.search-bar {
-  padding: 12px 20px;
-  border-radius: 30px;
-  border: none;
-  background-color: #1e1e1e;
-  color: #fff;
-  font-size: 1rem;
-  transition: 0.3s ease;
-  width: 100%;
-  max-width: 600px;
-  outline: none;
-  box-shadow: inset 0 0 0 1px #333;
-}
-
-@media screen and (max-width: 768px) {
-  .topbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  if (isHistory) {
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.type = 'button';
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+      history = history.filter(entry => !(entry.id === item.id && entry.media_type === item.media_type));
+      localStorage.setItem('watchHistory', JSON.stringify(history));
+      renderHistory();
+    });
+    card.appendChild(removeBtn);
   }
 
-  .topbar-center {
-    width: 100%;
-    padding: 0 1rem;
+  card.addEventListener('click', () => {
+    goToWatch(item);
+  });
+
+  return card;
+}
+
+function renderPosterRow(items, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  items.slice(0, 10).forEach(item => {
+    if (!item.poster_path && !item.backdrop_path) return;
+    container.appendChild(createPosterCard(item, false));
+  });
+}
+
+function addToHistory(item) {
+  const entry = {
+    id: item.id,
+    title: item.title || item.name || '',
+    poster_path: item.poster_path || item.poster || '',
+    media_type: item.media_type || 'movie',
+    season: item.season || null,
+    episode: item.episode || null,
+    server: document.getElementById('server')?.value || item.server || localStorage.getItem('lastServer') || 'vidsrc.cc',
+    updatedAt: Date.now()
+  };
+
+  let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  history = history.filter(h => !(h.id === entry.id && h.media_type === entry.media_type));
+  history.unshift(entry);
+
+  localStorage.setItem('watchHistory', JSON.stringify(history.slice(0, 20)));
+}
+
+function renderHistory() {
+  const container = document.getElementById('history-list');
+  if (!container) return;
+
+  let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  history = history.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+  container.innerHTML = '';
+
+  history.forEach(item => {
+    if (!item.poster_path) return;
+    container.appendChild(createPosterCard(item, true));
+  });
+}
+
+/* ---------- WATCH PAGE ---------- */
+function changeServer() {
+  const frame = document.getElementById('modal-video');
+  const serverSelect = document.getElementById('server');
+
+  if (!frame || !serverSelect || !currentItem.id) return;
+
+  const server = serverSelect.value;
+  localStorage.setItem('lastServer', server);
+
+  const type = currentItem.media_type === 'movie' ? 'movie' : 'tv';
+  let url = '';
+
+  switch (server) {
+    case 'vidsrc.cc':
+      url = currentItem.episode
+        ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`
+        : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+      break;
+
+    case 'vidsrc.in':
+      url = currentItem.episode
+        ? `https://vidsrc.in/embed/tv/${currentItem.id}/${currentItem.season}-${currentItem.episode}`
+        : `https://vidsrc.in/embed/movie/${currentItem.id}`;
+      break;
+
+    case 'player.videasy.net':
+      url = currentItem.episode
+        ? `https://player.videasy.net/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`
+        : `https://player.videasy.net/movie/${currentItem.id}`;
+      break;
+
+    case '2embed':
+      url = currentItem.episode
+        ? `https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`
+        : `https://www.2embed.cc/embed/${currentItem.id}`;
+      break;
+
+    case '2embed RU':
+      url = currentItem.episode
+        ? `https://www.2embed.ru/embed/tmdb/tv?id=${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`
+        : `https://www.2embed.ru/embed/tmdb/movie?id=${currentItem.id}`;
+      break;
+
+    case '2Anime': {
+      const slug = (currentItem.title || currentItem.name || '')
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+      const ep = currentItem.episode || 1;
+      url = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
+      break;
+    }
+
+    case 'multiembed.mov':
+      url = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1${currentItem.episode ? `&s=${currentItem.season}&e=${currentItem.episode}` : ''}`;
+      break;
+
+    case 'moviesapi.club animetv':
+      url = `https://moviesapi.club/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      break;
+
+    case 'moviesapi.club movie':
+      url = `https://moviesapi.club/movie/${currentItem.id}`;
+      break;
+
+    case 'apimocine-tv':
+      url = `https://apimocine.vercel.app/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      break;
+
+    case 'apimocine-movie':
+      url = `https://apimocine.vercel.app/movie/${currentItem.id}`;
+      break;
+
+    default:
+      url = currentItem.episode
+        ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`
+        : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+      break;
   }
 
-  .topbar-links {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
+  frame.src = url;
 }
 
+window.changeServer = changeServer;
 
-.search-bar:focus {
-  background-color: #2a2a2a;
-  box-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
-}
-
-.topbar-links {
-  display: flex;
-  gap: 20px;
-  font-size: 0.95rem;
-}
-
-.topbar-links a {
-  color: #ccc;
-  text-decoration: none;
-}
-
-.topbar-links a:hover {
-  color: #fff;
-}
-
-
-/* Banner/Slider container */
-.banner {
-  position: relative;
-  overflow: hidden;
-}
-
-
-.slider {
-  position: relative;
-  width: 100%;
-  height: 60vh;
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-
-.slides {
-  display: flex;
-  transition: transform 0.6s ease-in-out;
-}
-
-/* Each “slide” */
-.slide {
-  position: relative;
-  min-width: 100%;
-  height: 70vh;               /* adjust as you like */
-  background-size: cover;
-  background-position: center;
-}
-
-/* Overlay content (title, stars, description, button) */
-.slide-overlay {
-  position: absolute;
-  bottom: 20%;
-  left: 5%;
-  max-width: 40%;
-  color: #fff;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
-}
-.slide-overlay h1 {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
-.slide-overlay .rating i {
-  font-size: 1.1rem;
-  margin-right: 0.2rem;
-  color: #f5c518;            /* classic “star” color */
-}
-.slide-overlay p {
-  margin: 1rem 0;
-  line-height: 1.4;
-  max-height: 6em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* The big play button */
-.play-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 2.5rem;      /* bigger hit-area */
-  font-size: 1.25rem;         /* larger text */
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-radius: 2rem;
-  backdrop-filter: blur(6px); /* subtle frosted-glass */
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  z-index: 2;
-}
-
-.play-btn svg,
-.play-btn i {
-  font-size: 1.5rem;          /* bigger icon */
-}
-
-.play-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
-}
-
-
-
-.slide .meta {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: #aaa;
-}
-
-.slide .buttons {
-  display: flex;
-  gap: 1rem;
-}
-
-.slide .buttons button {
-  padding: 0.5rem 1.2rem;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.slide .buttons .details {
-  background: #fff;
-  color: #000;
-}
-
-.slide .buttons .watch {
-  background: #e50914;
-  color: #fff;
-}
-
-.nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  border: none;
-  color: white;
-  font-size: 2rem;
-  cursor: pointer;
-  z-index: 1;
-  padding: 0.5rem 1rem;
-  border-radius: 50%;
-}
-
-.nav.prev {
-  left: 10px;
-}
-
-.nav.next {
-  right: 10px;
-}
-
-.row {
-  padding: 1rem 3rem;
-  position: relative;
-}
-
-.row h2 {
-  margin-bottom: 0.5rem;
-}
-
-.list {
-  display: flex;
-  overflow-x: auto;
-  gap: 1rem;
-  scroll-behavior: smooth;
-  padding: 1rem 0;
-}
-
-.list::-webkit-scrollbar {
-  display: none;
-}
-
-.list img {
-  height: 240px;
-  border-radius: 12px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
-
-
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.95);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  overflow-y: auto;
-}
-
-.modal-content {
-  width: 95%;
-  max-width: 1200px;
-  background: #111;
-  padding: 2rem;
-  border-radius: 12px;
-  position: relative;
-  box-shadow: 0 0 20px rgba(0,255,204,0.1);
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-/* in your home.css (or watch.css) */
-#modal-video {
-  width: 100%;       /* span the full width of its wrapper */
-  height: auto;      /* keep natural aspect ratio */
-  max-height: 80vh;  /* optional—don’t exceed 80% of viewport height */
-  object-fit: cover; /* fill the box, cropping if necessary */
-  
-}
-
-
-
-.close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 2rem;
-  color: white;
-  cursor: pointer;
-  z-index: 10000;
-}
-
-.close:hover {
-  color: #ff5555;
-}
-
-.server-selector,
-.episode-selector,
-#season-selector {
-  margin-top: 1.2rem;
-  padding: 1rem;
-  background: #1f1f1f;
-  border: 1px solid #333;
-  border-radius: 8px;
-}
-
-.server-selector label,
-.episode-selector h3,
-#season-selector label {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-  display: block;
-  color: #ddd;
-}
-
-.server-selector select,
-#season-select {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  background-color: #1a1a1a;
-  color: #fff;
-  border: 1px solid #444;
-  width: 100%;
-  font-size: 0.95rem;
-}
-
-.episode-selector {
-  max-height: 200px;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-.episode-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.episode-list button {
-  padding: 0.4rem 0.8rem;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  color: #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s, color 0.3s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 280px;
-}
-
-.episode-list button:hover {
-  background-color: #00ffcc33;
-  color: #00ffcc;
-}
-
-.episode-pagination {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.episode-pagination button {
-  background-color: #222;
-  color: #eee;
-  border: 1px solid #444;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-.episode-pagination button:hover {
-  background-color: #00ffcc33;
-  color: #00ffcc;
-  border-color: #00ffcc;
-}
-
-.episode-pagination button.active {
-  background-color: #00ffcc;
-  color: #000;
-  font-weight: bold;
-  pointer-events: none;
-}
-
-
-.episode-pagination {
-  display: none;  /* hide pagination if not needed */
-}
-
-footer {
-  padding: 1rem;
-  text-align: center;
-  background: #111;
-  color: #aaa;
-}
-
-.footer-links a {
-  color: #888;
-  margin: 0 10px;
-  text-decoration: none;
-}
-
-.footer-links a:hover {
-  color: #fff;
-}
-
-.search-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  z-index: 9999;
-}
-
-.search-modal input {
-  width: 60%;
-  padding: 1rem;
-  font-size: 1.2rem;
-  background: #222;
-  border: none;
-  border-radius: 10px;
-  color: white;
-}
-
-.results {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
-  width: 80%;
-}
-
-.results img {
-  width: 100%;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.search-modal .close {
-  font-size: 2rem;
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  color: #fff;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.fade-in {
-  animation: fadeIn 1s ease-in-out;
-}
-
-.search-box {
-  position: relative;
-  width: 60%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1.2rem;
-  background: #222;
-  border: none;
-  border-radius: 10px;
-  color: white;
-  padding-right: 40px; /* space for the X button */
-}
-
-.search-close {
-  position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.search-close:hover {
-  color: #ff5555;
-}
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: white;
-  margin-right: 1rem;
-}
-
-.logo-text {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 1.8rem;
-  color: #00ffc3;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
+async function loadSeasons(item) {
+  const seasonSelect = document.getElementById('season-select');
+  if (!seasonSelect) return;
 
-.small-tv {
-  font-size: 0.6em;
-  color: #ffffffcc;
-  margin-left: 3px;
-}
-
-.episode-list button.active-episode {
-  background-color: #00ffcc;
-  color: #000;
-  font-weight: bold;
-  border-color: #00ffcc;
-}
-
-
-.active-episode {
-  background-color: #0ff;
-  color: #000;
-  font-weight: bold;
-}
-
-
-/* Wraps both player and controls */
-.watch-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;       /* centers children horizontally */
-  padding: 2rem;
-  gap: 1.5rem;
-}
-
-
-
-/* Give them a max width and full-width up to it */
-.player-container,
-.controls {
-  width: 90%;
-  max-width: 1200px;
-}
-
-/* Center the controls’ items */
-.controls {
-  display: flex;
-  justify-content: center;   /* centers server/season/episode selectors */
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-
-
-/* force episode sidebar to match player height */
-/* ===== Adjust Episode Panel Width & Height ===== */
-.episode-selector {
-  /* remove forcing full-height */
-  flex: 0 0 300px;       /* fixed 300px width, no grow/shrink */
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
-  padding: 1rem;
-  background: #1f1f1f;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-
-/* make only the inner list scrollable */
-.episode-selector #episode-list {
-  max-height: 360px;      /* your desired max height */
-  overflow-y: auto;
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 0.5rem;
-  background: #111;
-}
-
-
-
-/* === Episode List Styling === */
-.control-panel.episode-selector {
-  background: #1f1f1f;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-.control-panel.episode-selector #episode-list {
-  background: #111;
-  border: 1px solid #333;
-  padding: 0.5rem;
-  border-radius: 6px;
-  max-height: 300px;     /* adjust height as needed */
-  overflow-y: auto;      /* scroll when there are many episodes */
-}
-
-.control-panel.episode-selector #episode-list button {
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem;
-  background: #2a2a2a;
-  color: #ddd;
-  border: none;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.control-panel.episode-selector #episode-list button:hover {
-  background: rgba(0,255,204,0.2);
-}
-
-.control-panel.episode-selector #episode-list button.active-episode {
-  background: #00ffcc;
-  color: #000;
-}
-
-
-/* Add at the end of home.css */
-
-/* Grid layout for search results */
-.search-modal .results {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 1rem;
-}
-
-/* Each item’s image */
-.search-result-item img {
-  width: 100%;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-/* Title caption under each image */
-.search-result-item p {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #fff;
-}
-
-/* in home.css */
-.logo-link {
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-}
-
-
-
-/* Netflix-style gradient on the slider */
-.slider {
-  position: relative; /* ensure the pseudo-element layers correctly */
-}
-.slider::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 30%;  /* how far the fade reaches */
-  height: 100%;
-  background: linear-gradient(
-    to right,
-    rgba(0,0,0,0.85) 0%,
-    rgba(0,0,0,0)    100%
-  );
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Stronger hover effect on each poster */
-.list img:hover {
-  transform: scale(1.08);
-  filter: brightness(1.2);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-}
-
-
-
-/* global Netflix-dark background */
-body {
-  background-color: #141414;
-  background-image: linear-gradient(to bottom, #141414, #000);
-}
-
-/* subtle vertical gradient depth layer */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: linear-gradient(
-    to bottom,
-    rgba(20,20,20,0.85) 0%,
-    rgba(0,0,0,0.9)   100%
-  );
-  pointer-events: none;
-  z-index: -1;
-}
-
-/* slider gradient overlay (if you haven’t yet) */
-.slider {
-  position: relative;
-  overflow: hidden;
-}
-.slider::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 30%;
-  height: 100%;
-  background: linear-gradient(
-    to right,
-    rgba(0,0,0,0.85) 0%,
-    rgba(0,0,0,0)    100%
-  );
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* poster hover punch */
-.list img:hover {
-  transform: scale(1.08);
-  filter: brightness(1.2);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-}
-
-
+  const res = await fetch(`${BASE_URL}/tv/${item.id}?api_key=${API_KEY}`);
+  const data = await res.json();
 
+  currentSeasons = (data.seasons || []).filter(season => season.season_number >= 0);
 
-/* ───── Netflix-style Poster Cards ───── */
-.poster-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: transform .3s;
-}
-.poster-card img {
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  transition: transform .3s ease, filter .3s ease;
-}
-
-/* top & bottom badge bars */
-.poster-badges {
-  position: absolute;
-  left: 0; right: 0;
-  padding: 0.4rem;
-  display: flex;
-  gap: 0.4rem;
-  pointer-events: none;
-}
-.poster-badges.top { top: 0; justify-content: flex-start; }
-.poster-badges.bottom {
-  bottom: 0;
-  justify-content: flex-start;
-  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
-}
-
-/* individual badge styles */
-.poster-badges .badge {
-  background: rgba(0,0,0,0.7);
-  color: #fff;
-  font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 3px;
-  white-space: nowrap;
-}
-.poster-badges .badge.small {
-  font-size: 0.65rem;
-  padding: 0.15rem 0.4rem;
-}
-
-/* title underneath */
-.poster-title {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #eee;
-  text-align: left;
-}
-
-/* hover & active state */
-.poster-card:hover,
-.poster-card.active {
-  transform: scale(1.06);
-  z-index: 2;
-}
-.poster-card:hover img,
-.poster-card.active img {
-  filter: brightness(1.2);
-  transform: scale(1.08);
-}
-
-/* optional “selected” border */
-.poster-card.active {
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.8);
-}
-
-
-/* Make the player span edge-to-edge */
-.watch-section .player-container {
-  width: 50% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Remove any fallback fill behind the iframe */
-.watch-section .player-container iframe {
-  background: transparent !important;
-  border-radius: 0 !important;
-}
-
-
-
-/* ── Poster-card styles ───────────────────────────────── */
-.list .card {
-  position: relative;
-  flex: 0 0 160px;               /* fixed width per card */
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transition: transform 0.3s;
-}
-.list .card:hover {
-  transform: scale(1.05);
-}
-.list .card img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* common badge styles */
-.list .card .badge {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  padding: 3px 6px;
-  font-size: 0.7rem;
-  border-radius: 4px;
-  z-index: 1;
-}
-
-/* top-left “HD” badge */
-.list .card .quality {
-  top: 8px;
-  left: 8px;
-}
-
-/* bottom gradient + title */
-.list .card .title-overlay {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 10px;
-  color: #fff;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-  font-size: 1.0rem;
-  z-index: 1;
-}
+  seasonSelect.innerHTML = '';
 
+  currentSeasons.forEach(season => {
+    const option = document.createElement('option');
+    option.value = season.season_number;
+    option.textContent = season.name || `Season ${season.season_number}`;
+    seasonSelect.appendChild(option);
+  });
 
+  const initialSeason = item.season || (currentSeasons[0] ? currentSeasons[0].season_number : 1);
+  item.season = initialSeason;
+  seasonSelect.value = initialSeason;
 
-
-/* ── Search-results as flex list ───────────────────────────────── */
-#search-results {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin: 1rem 0;
-}
-
-/* force each search card to the same width as your slider cards */
-#search-results .card {
-  flex: 0 0 160px; /* match .list .card */
-}
-
-/* make sure the poster itself fills that box */
-#search-results .card img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-
-
-/* ── Enforce a uniform rectangle shape on all poster cards ── */
-.list .card,
-#search-results .card {
-  /* 2:3 poster ratio – tweak if you prefer 3:4 or 16:9 */
-  aspect-ratio: 2 / 3;
-  /* ensure flex sizing still applies */
-  flex: 0 0 160px;
-  border-radius: 0 !important;
-  overflow: hidden;
-}
-
-/* let the image fill that box and crop any overflow */
-.list .card img,
-#search-results .card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-
-#history-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-
-/* remove the 80vh cap so fullscreen can expand */
-#modal-video {
-  max-height: none !important;
-}
-
-/* ── Force true full-screen for modal-video ───────────────────────── */
-#modal-video:fullscreen,
-#modal-video:-webkit-full-screen,
-#modal-video:-moz-full-screen,
-#modal-video:-ms-fullscreen {
-  position: fixed !important;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  z-index: 9999;
-}
-
-
-
-
-
-/* Style & layer the slider arrows */
-.arrow {
-  position: absolute;
-  /* ... rest of existing arrow styles ... */
-  z-index: 2;
-}
-.poster-card:hover img,
-.poster-card.active img {
-  filter: brightness(1.2);
-  transform: scale(1.08);
-}
-
-/* optional “selected” border */
-.poster-card.active {
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.8);
+  seasonSelect.onchange = () => {
+    item.season = Number(seasonSelect.value);
+    item.episode = null;
+    addToHistory(item);
+    displayEpisodes(item);
+  };
 }
 
-/* Remove any existing border-radius on cards if needed */
-.card {
-  border-radius: 0;
-  overflow: hidden;
-}
-
-/* Ensure images cover their card containers */
-.card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+async function displayEpisodes(item) {
+  const episodeList = document.getElementById('episode-list');
+  if (!episodeList) return;
 
-/* Style for remove button inside history cards */
-.history-item .remove-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #ff4d4f;
-  color: #fff;
-  border: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  z-index: 2;
-}
+  episodeList.innerHTML = '';
 
-.history-item .remove-btn:hover {
-  background: #ff7875;
-}
+  const seasonNumber = item.season || Number(document.getElementById('season-select')?.value || 1);
+  item.season = seasonNumber;
 
+  const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNumber}?api_key=${API_KEY}`);
+  const data = await res.json();
 
+  (data.episodes || []).forEach(ep => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = `E${ep.episode_number}: ${ep.name}`;
 
-/* ==============================
-   Mobile override for video size
-   ============================== */
-@media (max-width: 768px) {
-  /* Make the container span (almost) the full screen */
-  .watch-section .player-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
+    if (item.episode === ep.episode_number) {
+      button.classList.add('active-episode');
+    }
+
+    button.addEventListener('click', () => {
+      item.episode = ep.episode_number;
+      addToHistory(item);
+      changeServer();
+
+      episodeList.querySelectorAll('button').forEach(btn => btn.classList.remove('active-episode'));
+      button.classList.add('active-episode');
+    });
+
+    episodeList.appendChild(button);
+  });
+}
+
+/* ---------- SEARCH ---------- */
+async function searchTMDB() {
+  const input = document.getElementById('search-input');
+  const results = document.getElementById('search-results');
+
+  if (!input || !results) return;
+
+  const query = input.value.trim();
+  results.innerHTML = '';
+
+  if (!query) return;
+
+  const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
+  const data = await res.json();
+
+  (data.results || []).forEach(item => {
+    if (!item.poster_path) return;
+    if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
+
+    const card = document.createElement('div');
+    card.className = 'search-card';
+    card.innerHTML = `
+      <img src="${IMG_URL}${item.poster_path}" alt="${item.title || item.name || ''}">
+      <p>${truncateText(item.title || item.name || '', 24)}</p>
+    `;
+
+    card.addEventListener('click', () => {
+      goToWatch({
+        ...item,
+        media_type: item.media_type
+      });
+    });
+
+    results.appendChild(card);
+  });
+}
+
+window.searchTMDB = searchTMDB;
+
+/* ---------- INIT ---------- */
+async function initHomePage() {
+  const movies = (await fetchTrending('movie')).map(item => ({ ...item, media_type: 'movie' }));
+  const topRatedTV = await fetchTopRatedTV();
+  const anime = await fetchTrendingAnime();
+
+  heroItems = movies.slice(0, 5);
+  heroIndex = 0;
+  renderHero();
+  startHeroAuto();
+
+  renderPosterRow(movies, 'movies-list');
+  renderPosterRow(topRatedTV, 'tvshows-list');
+  renderPosterRow(anime, 'anime-list');
+  renderHistory();
+}
+
+async function initWatchPage() {
+  const params = new URLSearchParams(window.location.search);
+  const id = Number(params.get('id'));
+  const mediaType = params.get('media_type');
+  const title = params.get('title') || '';
+  const poster = params.get('poster') || '';
+  const season = params.get('season') ? Number(params.get('season')) : null;
+  const episode = params.get('episode') ? Number(params.get('episode')) : null;
+  const server = params.get('server') || localStorage.getItem('lastServer') || 'vidsrc.cc';
+
+  currentItem = {
+    id,
+    media_type: mediaType,
+    title,
+    poster_path: poster,
+    season,
+    episode,
+    server
+  };
+
+  const serverSelect = document.getElementById('server');
+  if (serverSelect) {
+    serverSelect.value = server;
+    serverSelect.addEventListener('change', () => {
+      currentItem.server = serverSelect.value;
+      addToHistory(currentItem);
+      changeServer();
+    });
   }
 
-  /* Force the iframe to fill that container */
-  .watch-section .player-container iframe {
-    width: 100% !important;
-    height: auto !important;      /* let it scale naturally */
-    max-height: none !important;  /* remove any caps */
+  addToHistory(currentItem);
+
+  if (mediaType === 'tv') {
+    await loadSeasons(currentItem);
+    await displayEpisodes(currentItem);
   }
 
-  /* (Optional) if you want a fixed 16:9 aspect ratio */
-  .watch-section .player-container {
-    /* 56.25% = 9/16 */
-    padding-top: 56.25%;
-    position: relative;
-  }
-  .watch-section .player-container iframe {
-    position: absolute;
-    top: 0; left: 0;
+  changeServer();
+}
+
+async function init() {
+  try {
+    if (isWatchPage()) {
+      await initWatchPage();
+    } else {
+      await initHomePage();
+    }
+  } catch (error) {
+    console.error('Init error:', error);
   }
 }
 
-/* ─── Mobile: Stack Controls & Reveal Server Selector ─── */
-@media (max-width: 768px) {
-  .controls {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 1rem !important;
-  }
-
-  .control-panel {
-    width: 100% !important;
-    min-width: auto !important;
-  }
-
-  /* Make sure the select fills its panel */
-  .control-panel select {
-    width: 100% !important;
-    font-size: 1rem;
-  }
-
-  /* Optional spacing under the video */
-  .watch-section .player-container {
-    margin-bottom: 1rem !important;
-  }
-}
-/* ─── Mobile: Stack Watch Controls ─── */
-@media (max-width: 800px) {
-  /* Make the video full-width but let it size naturally */
-  .watch-section .player-container {
-    width: 100% !important;
-    max-width: none !important;
-    height: 50vh !important;
-    margin: 0 0 1rem !important;    /* space below for controls */
-    padding: 0 !important;
-    position: static !important;    /* undo any absolute/ratio hacks */
-  }
-  .watch-section .player-container iframe {
-    width: 100% !important;
-    height: 100% !important;
-    position: static !important;
-  }
-
-  /* Now stack your controls vertically */
-  .controls {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 1rem !important;
-    width: 90% !important;
-    max-width: 1200px !important;
-    margin: 0 auto !important;
-  }
-
-  /* Each panel fills the width */
-  .control-panel {
-    flex: none !important;
-    width: 100% !important;
-    min-width: auto !important;
-  }
-
-  /* Make your selects full-width */
-  .control-panel select {
-    width: 100% !important;
-    font-size: 1rem !important;
-  }
-}
-
-/* Remove dark bg on Trending row arrows */
-.row .nav.prev,
-.row .nav.next {
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Optionally make the arrow icon itself more visible */
-.row .nav.prev,
-.row .nav.next {
-  color: #fff;      /* or whatever accent color you prefer */
-  font-size: 1.5rem;
-}
-/* Remove the black title-overlay under posters */
-.list .card .title-overlay {
-  background: none !important;
-}
-
-/* ─── Mobile: Swipeable Watch History ─── */
-@media (max-width: 768px) {
-  /* 1) Make the history list horizontal */
-  #history-list {
-    display: flex !important;               /* already flex, but ensure no wrap */
-    flex-wrap: nowrap !important;           /* prevent wrapping onto new lines */
-    overflow-x: auto !important;            /* enable horizontal scroll */
-    -webkit-overflow-scrolling: touch;      /* iOS momentum scrolling */
-    gap: 1rem !important;                   /* spacing between cards */
-    padding: 1rem 0 !important;             /* a little vertical breathing room */
-  }
-
-  /* 2) Force each history card to stay a fixed width */
-  #history-list .history-item {
-    flex: 0 0 auto !important;              /* no grow, no shrink */
-    width: 120px !important;                /* or whatever width you prefer */
-    min-width: 120px !important;
-  }
-
-  /* 3) (Optional) hide native scroll bar for a cleaner look */
-  #history-list::-webkit-scrollbar {
-    display: none;
-  }
-}
+init();
