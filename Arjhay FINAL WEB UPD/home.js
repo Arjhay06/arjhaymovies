@@ -646,72 +646,43 @@ serverSelect.value = server;
 
   switch (server) {
     case 'vidsrc.cc':
-      url = currentItem.episode
-        ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`
-        : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+      url = currentItem.episode ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}` : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
       break;
-
     case 'vidsrc.in':
-      url = currentItem.episode
-        ? `https://vidsrc.in/embed/tv/${currentItem.id}/${currentItem.season}-${currentItem.episode}`
-        : `https://vidsrc.in/embed/movie/${currentItem.id}`;
+      url = currentItem.episode ? `https://vidsrc.in/embed/tv/${currentItem.id}/${currentItem.season}-${currentItem.episode}` : `https://vidsrc.in/embed/movie/${currentItem.id}`;
       break;
-
     case 'player.videasy.net':
-      url = currentItem.episode
-        ? `https://player.videasy.net/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`
-        : `https://player.videasy.net/movie/${currentItem.id}`;
+      url = `https://player.videasy.net/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
-
     case '2embed':
-      url = currentItem.episode
-        ? `https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`
-        : `https://www.2embed.cc/embed/${currentItem.id}`;
+      url = currentItem.episode ? `https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}` : `https://www.2embed.cc/embed/${currentItem.id}`;
       break;
-
     case '2embed RU':
-      url = currentItem.episode
-        ? `https://www.2embed.ru/embed/tmdb/tv?id=${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`
-        : `https://www.2embed.ru/embed/tmdb/movie?id=${currentItem.id}`;
+      url = `https://www.2embed.ru/embed/tmdb/tv?id=${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}`;
       break;
-
     case '2Anime': {
-      const slug = (currentItem.title || currentItem.name || '')
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-');
-
+      let slug = (currentItem.title || currentItem.name || '').toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
       const ep = currentItem.episode || 1;
       url = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
       break;
     }
-
     case 'multiembed.mov':
       url = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1${currentItem.episode ? `&s=${currentItem.season}&e=${currentItem.episode}` : ''}`;
       break;
-
     case 'moviesapi.club animetv':
       url = `https://moviesapi.club/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
-
     case 'moviesapi.club movie':
       url = `https://moviesapi.club/movie/${currentItem.id}`;
       break;
-
     case 'apimocine-tv':
       url = `https://apimocine.vercel.app/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
-
     case 'apimocine-movie':
       url = `https://apimocine.vercel.app/movie/${currentItem.id}`;
       break;
-
     default:
-      url = currentItem.episode
-        ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`
-        : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
-      break;
+      url = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
   }
 
   frame.src = url;
