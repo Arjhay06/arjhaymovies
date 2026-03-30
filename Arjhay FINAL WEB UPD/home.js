@@ -7,6 +7,22 @@ let currentSeasons = [];
 let heroItems = [];
 let heroIndex = 0;
 let heroTimer = null;
+let activeTab = 'home';
+
+const allData = {
+  movies: [],
+  series: [],
+  tvshows: [],
+  anime: [],
+  history: []
+};
+
+const expandedRows = {
+  'movies-list': false,
+  'tvshows-list': false,
+  'anime-list': false,
+  'history-list': false
+};
 
 function truncateText(str, maxLength = 28) {
   if (typeof str !== 'string') return '';
@@ -22,11 +38,13 @@ function openSearchModal() {
   const modal = document.getElementById('search-modal');
   if (!modal) return;
   modal.style.display = 'flex';
+
   const input = document.getElementById('search-input');
   if (input) {
     input.value = '';
     input.focus();
   }
+
   const results = document.getElementById('search-results');
   if (results) results.innerHTML = '';
 }
@@ -35,6 +53,7 @@ function closeSearchModal() {
   const modal = document.getElementById('search-modal');
   if (!modal) return;
   modal.style.display = 'none';
+
   const results = document.getElementById('search-results');
   if (results) results.innerHTML = '';
 }
@@ -56,16 +75,21 @@ async function fetchTopRatedTV() {
 
 async function fetchTrendingAnime() {
   let all = [];
+
   for (let page = 1; page <= 3; page += 1) {
     const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
     const data = await res.json();
+
     const filtered = (data.results || []).filter(
-      item => item.original_language === 'ja' &&
-      Array.isArray(item.genre_ids) &&
-      item.genre_ids.includes(16)
+      item =>
+        item.original_language === 'ja' &&
+        Array.isArray(item.genre_ids) &&
+        item.genre_ids.includes(16)
     );
+
     all = all.concat(filtered.map(item => ({ ...item, media_type: 'tv' })));
   }
+
   return all;
 }
 
@@ -89,6 +113,19 @@ function goToWatch(item) {
 }
 
 /* ---------- HERO ---------- */
+function getTranslationLabel(item) {
+  if (item.original_language === 'ja') return 'Sub/Dub Anime';
+  if (item.media_type === 'tv') return 'Multi-language TV';
+  return 'Sub/Dub Available';
+}
+
+function setHeroSource(items) {
+  heroItems = items.slice(0, 5);
+  heroIndex = 0;
+  renderHero();
+  startHeroAuto();
+}
+
 function renderHero() {
   const item = heroItems[heroIndex];
   if (!item) return;
@@ -97,6 +134,7 @@ function renderHero() {
   const title = document.getElementById('hero-title');
   const overview = document.getElementById('hero-overview');
   const rating = document.getElementById('hero-rating');
+  const translation = document.getElementById('hero-translation');
   const watchBtn = document.getElementById('hero-watch-btn');
 
   if (!backdrop || !title || !overview || !rating || !watchBtn) return;
@@ -105,6 +143,10 @@ function renderHero() {
   title.textContent = item.title || item.name || 'Untitled';
   overview.textContent = truncateText(item.overview || 'No description available.', 220);
   rating.textContent = item.vote_average ? `${item.vote_average.toFixed(1)} Rating` : '7.0 Rating';
+
+  if (translation) {
+    translation.textContent = getTranslationLabel(item);
+  }
 
   watchBtn.onclick = () => goToWatch(item);
 }
@@ -131,7 +173,7 @@ function startHeroAuto() {
   }, 6000);
 }
 
-/* ---------- POSTER ROWS ---------- */
+/* ---------- CARDS ---------- */
 function buildProgressLabel(item) {
   if (item.media_type === 'tv' && item.season && item.episode) {
     return `Continue S${item.season} • E${item.episode}`;
@@ -153,11 +195,10 @@ function createPosterCard(item, isHistory = false) {
     <div class="poster-thumb">
       <img src="${IMG_URL}${item.poster_path || item.backdrop_path}" alt="${item.title || item.name || ''}">
       <div class="poster-body">
-        <div class="poster-title">${truncateText(item.title || item.name || '', 20)}</div>
+        <div class="poster-title">${truncateText(item.title || item.name || '', 50)}</div>
         <div class="poster-sub">${subText || ''}</div>
         <div class="poster-actions">
           <button class="mini-watch-btn" type="button">${isHistory ? 'Continue' : 'Watch now'}</button>
-          <button class="mini-plus-btn" type="button">+</button>
         </div>
       </div>
     </div>
@@ -168,6 +209,7 @@ function createPosterCard(item, isHistory = false) {
     removeBtn.className = 'remove-btn';
     removeBtn.type = 'button';
     removeBtn.textContent = '×';
+
     removeBtn.addEventListener('click', event => {
       event.stopPropagation();
       let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
@@ -175,6 +217,7 @@ function createPosterCard(item, isHistory = false) {
       localStorage.setItem('watchHistory', JSON.stringify(history));
       renderHistory();
     });
+
     card.appendChild(removeBtn);
   }
 
@@ -185,18 +228,69 @@ function createPosterCard(item, isHistory = false) {
   return card;
 }
 
-function renderPosterRow(items, containerId) {
+function renderPosterRow(items, containerId, isHistory = false) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   container.innerHTML = '';
 
-  items.slice(0, 10).forEach(item => {
+  const showAll = expandedRows[containerId];
+  const visibleItems = showAll ? items : items.slice(0, 10);
+
+  container.classList.toggle('expanded', showAll);
+
+  visibleItems.forEach(item => {
     if (!item.poster_path && !item.backdrop_path) return;
-    container.appendChild(createPosterCard(item, false));
+    container.appendChild(createPosterCard(item, isHistory));
   });
+
+  updateSeeAllText(containerId, items.length);
 }
 
+function updateSeeAllText(containerId, totalCount) {
+  const link = document.querySelector(`.see-all[data-target="${containerId}"]`);
+  if (!link) return;
+
+  if (totalCount <= 10) {
+    link.textContent = 'See all';
+    link.style.opacity = '0.5';
+    return;
+  }
+
+  link.style.opacity = '1';
+  link.textContent = expandedRows[containerId] ? 'Show less' : 'See all';
+}
+
+function getItemsForContainer(containerId) {
+  if (containerId === 'history-list') return allData.history;
+  if (containerId === 'tvshows-list') return allData.series;
+  if (containerId === 'anime-list') return allData.anime;
+
+  if (containerId === 'movies-list') {
+    if (activeTab === 'movies') return allData.movies;
+    if (activeTab === 'tvshows') return allData.tvshows;
+    return allData.movies;
+  }
+
+  return [];
+}
+
+
+
+function toggleSeeAll(containerId) {
+  const items = getItemsForContainer(containerId);
+  if (items.length <= 10) return;
+
+  expandedRows[containerId] = !expandedRows[containerId];
+
+  if (containerId === 'history-list') {
+    renderPosterRow(items, containerId, true);
+  } else {
+    renderPosterRow(items, containerId, false);
+  }
+}
+
+/* ---------- HISTORY ---------- */
 function addToHistory(item) {
   const entry = {
     id: item.id,
@@ -213,21 +307,128 @@ function addToHistory(item) {
   history = history.filter(h => !(h.id === entry.id && h.media_type === entry.media_type));
   history.unshift(entry);
 
-  localStorage.setItem('watchHistory', JSON.stringify(history.slice(0, 20)));
+  localStorage.setItem('watchHistory', JSON.stringify(history.slice(0, 30)));
 }
 
 function renderHistory() {
-  const container = document.getElementById('history-list');
-  if (!container) return;
-
   let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
   history = history.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  allData.history = history;
+  renderPosterRow(allData.history, 'history-list', true);
+}
 
-  container.innerHTML = '';
+/* ---------- TABS ---------- */
+function refreshBannerForTab(tabName) {
+  const heroSection = document.getElementById('hero-banner');
+  if (!heroSection) return;
 
-  history.forEach(item => {
-    if (!item.poster_path) return;
-    container.appendChild(createPosterCard(item, true));
+  if (tabName === 'home') {
+    heroSection.style.display = 'block';
+    setHeroSource(allData.movies);
+    return;
+  }
+
+  heroSection.style.display = 'none';
+}
+
+function refreshMainRowForTab(tabName) {
+  const moviesSection = document.querySelector('[data-main-section="movies"]');
+  const topRatedSection = document.querySelector('[data-main-section="toprated"]');
+  const animeSection = document.querySelector('[data-main-section="anime"]');
+
+  if (!moviesSection || !topRatedSection || !animeSection) return;
+
+  if (tabName === 'home') {
+    moviesSection.style.display = 'block';
+    topRatedSection.style.display = 'block';
+    animeSection.style.display = 'block';
+
+    renderPosterRow(allData.movies, 'movies-list', false);
+    renderPosterRow(allData.series, 'tvshows-list', false);
+    renderPosterRow(allData.anime, 'anime-list', false);
+    return;
+  }
+
+  if (tabName === 'movies') {
+    moviesSection.style.display = 'block';
+    topRatedSection.style.display = 'none';
+    animeSection.style.display = 'none';
+
+    renderPosterRow(allData.movies, 'movies-list', false);
+    return;
+  }
+
+  if (tabName === 'tvshows') {
+    moviesSection.style.display = 'block';
+    topRatedSection.style.display = 'none';
+    animeSection.style.display = 'none';
+
+    renderPosterRow(allData.tvshows, 'movies-list', false);
+  }
+}
+
+function updateMainRowTitle(tabName) {
+  const titleEl = document.querySelector('[data-main-title]');
+  const seeAllEl = document.querySelector('.see-all[data-target="movies-list"]');
+
+  if (!titleEl || !seeAllEl) return;
+
+  if (tabName === 'home') {
+    titleEl.innerHTML = 'Trending movies';
+    seeAllEl.dataset.target = 'movies-list';
+    updateSeeAllText('movies-list', allData.movies.length);
+    return;
+  }
+
+  if (tabName === 'movies') {
+    titleEl.innerHTML = 'Movies';
+    seeAllEl.dataset.target = 'movies-list';
+    updateSeeAllText('movies-list', allData.movies.length);
+    return;
+  }
+
+  if (tabName === 'tvshows') {
+    titleEl.innerHTML = 'TV Shows';
+    seeAllEl.dataset.target = 'movies-list';
+    updateSeeAllText('movies-list', allData.tvshows.length);
+  }
+}
+
+function activateTab(tabName) {
+  activeTab = tabName;
+
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === tabName);
+  });
+
+  refreshBannerForTab(tabName);
+  refreshMainRowForTab(tabName);
+  updateMainRowTitle(tabName);
+}
+
+function setupTabs() {
+  const tabs = document.querySelectorAll('.tab');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      expandedRows['movies-list'] = false;
+      activateTab(tab.dataset.tab);
+    });
+  });
+}
+
+/* ---------- SEE ALL ---------- */
+function setupSeeAllLinks() {
+  const links = document.querySelectorAll('.see-all');
+
+  links.forEach(link => {
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      const target = link.dataset.target;
+      if (!target) return;
+      toggleSeeAll(target);
+    });
   });
 }
 
@@ -281,6 +482,7 @@ function changeServer() {
         .replace(/[^\w\s-]/g, '')
         .trim()
         .replace(/\s+/g, '-');
+
       const ep = currentItem.episode || 1;
       url = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
       break;
@@ -427,15 +629,26 @@ async function initHomePage() {
   const topRatedTV = await fetchTopRatedTV();
   const anime = await fetchTrendingAnime();
 
-  heroItems = movies.slice(0, 5);
-  heroIndex = 0;
-  renderHero();
-  startHeroAuto();
+  const combinedShows = [...topRatedTV, ...anime]
+    .filter((item, index, arr) => arr.findIndex(x => x.id === item.id) === index)
+    .slice(0, 50)
+    .map(item => ({ ...item, media_type: 'tv' }));
 
-  renderPosterRow(movies, 'movies-list');
-  renderPosterRow(topRatedTV, 'tvshows-list');
-  renderPosterRow(anime, 'anime-list');
+  allData.movies = movies;
+  allData.series = topRatedTV;
+  allData.anime = anime;
+  allData.tvshows = combinedShows;
+
+  setHeroSource(allData.movies);
+
+  renderPosterRow(allData.movies, 'movies-list');
+  renderPosterRow(allData.series, 'tvshows-list');
+  renderPosterRow(allData.anime, 'anime-list');
   renderHistory();
+
+  setupTabs();
+  setupSeeAllLinks();
+  activateTab('home');
 }
 
 async function initWatchPage() {
