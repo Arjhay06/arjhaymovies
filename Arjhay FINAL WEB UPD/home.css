@@ -629,4 +629,58 @@ footer {
 .poster-actions .mini-plus-btn {
   display: none !important;
 }
+/* ===== WATCH PREMIUM ===== */
 
+.watch-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  padding: 16px;
+}
+
+.watch-info {
+  margin-top: 16px;
+  background: #111;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.server-box {
+  margin-top: 12px;
+}
+
+#episode-sidebar {
+  background: #0f0f0f;
+  padding: 10px;
+  border-radius: 16px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* EPISODE CARD */
+.episode-card {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: #161616;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.episode-card img {
+  width: 90px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.episode-card.active {
+  background: #5c3cff;
+}
+
+/* HIDE FOR MOVIES */
+.movie-mode #episode-sidebar,
+.movie-mode #season-container {
+  display: none;
+}
