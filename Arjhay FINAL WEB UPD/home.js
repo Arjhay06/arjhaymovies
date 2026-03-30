@@ -568,19 +568,24 @@ async function displayEpisodes(item) {
     button.textContent = `E${ep.episode_number}: ${ep.name}`;
 
     if (item.episode === ep.episode_number) {
-      button.classList.add('active-episode');
+      card.classList.add('active');
     }
 
-    button.addEventListener('click', () => {
+    card.innerHTML = `
+      <img src="${IMG_URL}${ep.still_path}">
+      <div>
+        <strong>EP ${ep.episode_number}</strong>
+        <p>${truncateText(ep.name, 40)}</p>
+      </div>
+    `;
+
+    card.onclick = () => {
       item.episode = ep.episode_number;
-      addToHistory(item);
       changeServer();
+      displayEpisodes(item);
+    };
 
-      episodeList.querySelectorAll('button').forEach(btn => btn.classList.remove('active-episode'));
-      button.classList.add('active-episode');
-    });
-
-    episodeList.appendChild(button);
+    container.appendChild(card);
   });
 }
 
@@ -689,6 +694,10 @@ async function initWatchPage() {
   }
 
   changeServer();
+
+  if (mediaType === 'movie') {
+  document.querySelector('.watch-layout').classList.add('movie-mode');
+}
 }
 
 async function init() {
