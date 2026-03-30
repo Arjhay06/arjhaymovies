@@ -946,3 +946,97 @@ footer {
 .poster-actions .mini-plus-btn {
   display: none !important;
 }
+
+
+/* =========================================
+   GLOBAL POSTER CARD (NEW DESIGN)
+========================================= */
+
+.poster-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.poster-row::-webkit-scrollbar {
+  display: none;
+}
+
+.poster-card {
+  flex: 0 0 180px;
+  cursor: pointer;
+}
+
+/* IMAGE */
+.poster-thumb {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  overflow: hidden;
+  background: #111;
+  border-radius: 0;
+}
+
+.poster-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+/* HOVER */
+.poster-card:hover img {
+  transform: scale(1.05);
+}
+
+/* DARK GRADIENT */
+.poster-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0,0,0,0.95),
+    rgba(0,0,0,0.2),
+    rgba(0,0,0,0)
+  );
+}
+
+/* BADGES */
+.poster-badges {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.poster-badge {
+  background: #b7f3bd;
+  color: #000;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+/* TITLE BELOW */
+.poster-title {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* REMOVE OLD BUTTONS */
+.mini-watch-btn,
+.poster-sub {
+  display: none !important;
+}
