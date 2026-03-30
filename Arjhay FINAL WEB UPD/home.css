@@ -596,3 +596,37 @@ footer {
     font-size: 13px;
   }
 }
+
+.tab-section.hidden-section {
+  display: none;
+}
+
+.see-all {
+  cursor: pointer;
+}
+
+.poster-row.expanded {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
+.poster-row.expanded .poster-card {
+  flex: 0 0 190px;
+}
+
+.hero-translation {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hero-actions .plus-btn,
+.poster-actions .mini-plus-btn {
+  display: none !important;
+}
+
