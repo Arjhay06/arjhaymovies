@@ -15,43 +15,129 @@
       <a href="index.html" class="brand">Arjhay<span>TV</span></a>
 
       <div class="nav-icons">
-        <button type="button" class="icon-btn" onclick="openSearchModal()">
+        <button type="button" class="icon-btn" onclick="openSearchModal()" aria-label="Search">
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
       </div>
     </header>
 
-    <section class="watch-layout">
-
-      <!-- LEFT -->
-      <div>
-        <div class="player-container">
-          <iframe id="modal-video" allowfullscreen></iframe>
+    <section class="watch-layout" id="watch-layout">
+      <!-- LEFT SIDE -->
+      <div class="watch-left">
+        <div class="watch-player-wrap">
+          <iframe
+            id="modal-video"
+            frameborder="0"
+            allow="autoplay; fullscreen; encrypted-media"
+            allowfullscreen
+          ></iframe>
         </div>
 
-        <!-- INFO -->
-        <div class="watch-info">
-          <h1 id="watch-title">Loading...</h1>
-          <p id="watch-description">Loading...</p>
+        <div class="watch-detail-card">
+          <div class="watch-detail-top">
+            <div class="watch-title-wrap">
+              <h1 id="watch-title">Loading...</h1>
+              <div class="watch-mini-meta">
+                <span id="watch-type-badge" class="watch-type-badge">TV</span>
+                <span id="watch-year">—</span>
+                <span id="watch-rating">—</span>
+                <span id="watch-runtime">—</span>
+              </div>
+            </div>
 
-          <!-- SERVER -->
-          <div class="server-box">
-            <label>Server</label>
-            <select id="server"></select>
+            <div class="watch-server-wrap">
+              <label for="server">Server</label>
+              <select id="server">
+                <option value="vidsrc.cc">Vidsrc.cc</option>
+                <option value="vidsrc.in">Vidsrc.in</option>
+                <option value="player.videasy.net">Player.Videasy.net</option>
+                <option value="2embed">2Embed</option>
+                <option value="2embed RU">2Embed RU</option>
+                <option value="2Anime">2Anime</option>
+                <option value="moviesapi.club animetv">MoviesAPI Club TV</option>
+                <option value="moviesapi.club movie">MoviesAPI Club Movie</option>
+                <option value="multiembed.mov">MultiEmbed</option>
+                <option value="apimocine-tv">ApiMocine TV</option>
+                <option value="apimocine-movie">ApiMocine Movie</option>
+              </select>
+            </div>
+          </div>
+
+          <p id="watch-description" class="watch-description">Loading...</p>
+
+          <div class="watch-info-grid">
+            <div class="watch-poster-box">
+              <img id="watch-poster" src="" alt="Poster">
+            </div>
+
+            <div class="watch-meta-box">
+              <div class="watch-meta-grid">
+                <div>
+                  <span class="meta-label">Status</span>
+                  <strong id="watch-status">—</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Country</span>
+                  <strong id="watch-country">—</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Genres</span>
+                  <strong id="watch-genres">—</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Language</span>
+                  <strong id="watch-language">—</strong>
+                </div>
+                <div id="season-info-item">
+                  <span class="meta-label">Season</span>
+                  <strong id="watch-season-display">—</strong>
+                </div>
+                <div id="episode-info-item">
+                  <span class="meta-label">Episode</span>
+                  <strong id="watch-episode-display">—</strong>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- SEASONS -->
-        <div id="season-container"></div>
+        <section class="watch-seasons-card" id="watch-seasons-card">
+          <div class="section-head">
+            <h2>Seasons</h2>
+          </div>
+          <div id="season-cards" class="season-cards"></div>
+        </section>
       </div>
 
-      <!-- RIGHT EPISODES -->
-      <aside id="episode-sidebar">
-        <select id="season-select"></select>
-        <div id="episode-list"></div>
-      </aside>
+      <!-- RIGHT SIDE -->
+      <aside class="watch-right" id="episode-sidebar">
+        <div class="episode-sidebar-top">
+          <select id="season-select"></select>
 
+          <div class="episode-search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="episode-filter" placeholder="Filter episodes...">
+          </div>
+        </div>
+
+        <div id="episode-list" class="episode-list-premium"></div>
+      </aside>
     </section>
+
+    <div class="search-modal" id="search-modal">
+      <div class="search-panel">
+        <div class="search-input-wrap">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search for a movie or show..."
+            oninput="searchTMDB()"
+          />
+          <button class="search-close" type="button" onclick="closeSearchModal()">×</button>
+        </div>
+        <div class="search-results-grid" id="search-results"></div>
+      </div>
+    </div>
   </div>
 </body>
 </html>
