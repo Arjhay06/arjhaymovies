@@ -32,14 +32,14 @@ function isAnimeTitle(item) {
 
 function getAllowedServers(mediaType, item = {}) {
   if (mediaType === 'movie') {
-    return ['multiembed.mov','vidsrc.cc','vidsrc.in','player.videasy.net','2embed','2embed RU','moviesapi.club movie','apimocine movie'];
+    return ['multiembed.mov','vidsrc.icu','player.videasy.net','2embed','2embed RU','moviesapi.club movie','apimocine movie'];
   }
 
   if (isAnimeTitle(item)) {
-    return ['multiembed.mov','vidsrc.cc','vidsrc.in','2Anime','2embed','2embed RU','moviesapi.club animetv','apimocine tv'];
+    return ['multiembed.mov','.cc','.in','2Anime','2embed','2embed RU','moviesapi.club animetv','apimocine tv'];
   }
 
-  return ['vidsrc.cc','vidsrc.in','player.videasy.net','2embed','2embed RU'];
+  return ['.cc','.in','player.videasy.net','2embed','2embed RU'];
 }
 
 function getPreferredServer(mediaType, requestedServer, item = {}) {
@@ -151,7 +151,7 @@ function goToWatch(item) {
     poster: item.poster_path || '',
     season: item.season || '',
     episode: item.episode || '',
-    server: item.server || localStorage.getItem('lastServer') || 'vidsrc.cc'
+    server: item.server || localStorage.getItem('lastServer') || 'vidsrc.icu'
   });
 
   window.location.href = `watch.html?${params.toString()}`;
@@ -346,7 +346,7 @@ function addToHistory(item) {
     media_type: item.media_type || 'movie',
     season: item.season || null,
     episode: item.episode || null,
-    server: document.getElementById('server')?.value || item.server || localStorage.getItem('lastServer') || 'vidsrc.cc',
+    server: document.getElementById('server')?.value || item.server || localStorage.getItem('lastServer') || 'vidsrc.icu',
     updatedAt: Date.now()
   };
 
@@ -645,11 +645,8 @@ serverSelect.value = server;
   let url = '';
 
   switch (server) {
-    case 'vidsrc.cc':
-      url = currentItem.episode ? `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}` : `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
-      break;
-    case 'vidsrc.in':
-      url = currentItem.episode ? `https://vidsrc.in/embed/tv/${currentItem.id}/${currentItem.season}-${currentItem.episode}` : `https://vidsrc.in/embed/movie/${currentItem.id}`;
+    case 'vidsrc.icu':
+      url = currentItem.episode ? `https://vidsrc.icu/v2/embed/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}` : `https://vidsrc.icu/v2/embed/${type}/${currentItem.id}`;
       break;
     case 'player.videasy.net':
       url = `https://player.videasy.net/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
@@ -682,7 +679,7 @@ serverSelect.value = server;
       url = `https://apimocine.vercel.app/movie/${currentItem.id}`;
       break;
     default:
-      url = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+      url = `https://vidsrc.icu/v2/embed/${type}/${currentItem.id}`;
   }
 
   frame.src = url;
@@ -925,7 +922,7 @@ async function initWatchPage() {
   const poster = params.get('poster') || '';
   const season = params.get('season') ? Number(params.get('season')) : 1;
   const episode = params.get('episode') ? Number(params.get('episode')) : 1;
-  const server = params.get('server') || localStorage.getItem('lastServer') || 'vidsrc.cc';
+  const server = params.get('server') || localStorage.getItem('lastServer') || 'vidsrc.icu';
 
   currentItem = {
     id,
