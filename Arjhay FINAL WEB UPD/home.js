@@ -646,7 +646,7 @@ serverSelect.value = server;
 
   switch (server) {
     case 'vidsrc.icu':
-      url = currentItem.episode ? `https://vidsrc.icu/embed/tv${currentItem.id}/${currentItem.season}/${currentItem.episode}` : `https://vidsrc.icu/embed/movie/${currentItem.id}`;
+      url =`https://vidsrc.icu/embed/movie/${currentItem.id}`;
       break;
     case 'player.videasy.net':
       url = `https://player.videasy.net/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
