@@ -32,11 +32,11 @@ function isAnimeTitle(item) {
 
 function getAllowedServers(mediaType, item = {}) {
   if (mediaType === 'movie') {
-    return ['multiembed.mov','vidsrc.icu','player.videasy.net','2embed','2embed RU','moviesapi.club movie','apimocine movie'];
+    return ['multiembed.mov','multiembed.mov','vidsrc.icu','player.videasy.net','2embed','2embed RU','moviesapi.club movie','apimocine movie'];
   }
 
   if (isAnimeTitle(item)) {
-    return ['multiembed.mov','.cc','.in','2Anime','2embed','2embed RU','moviesapi.club animetv','apimocine tv'];
+    return ['vidsrcme.ru','.cc','.in','2Anime','2embed','2embed RU','moviesapi.club animetv','apimocine tv'];
   }
 
   return ['.cc','.in','player.videasy.net','2embed','2embed RU'];
@@ -647,6 +647,9 @@ serverSelect.value = server;
   switch (server) {
     case 'vidsrc.icu':
       url =`https://vidsrc.icu/embed/movie/${currentItem.id}`;
+      break;
+      case 'vidsrcme.ru':
+      url = `https://vidsrcme.ru/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
     case 'player.videasy.net':
       url = `https://player.videasy.net/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
