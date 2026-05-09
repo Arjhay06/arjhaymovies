@@ -649,7 +649,7 @@ serverSelect.value = server;
       url =`https://vidsrc.icu/embed/movie/${currentItem.id}`;
       break;
       case 'vidsrcme.ru':
-      url = `https://vidsrcme.ru/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      url = `https://vidsrcme.ru/embed/${type}?tmdb=${currentItem.id}&season=${currentItem.season}&episode=${currentItem.episode}`;
       break;
     case 'player.videasy.net':
       url = `https://player.videasy.net/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
