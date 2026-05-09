@@ -39,7 +39,7 @@ function getAllowedServers(mediaType, item = {}) {
     return ['vidsrcme.ru','.cc','.in','2Anime','2embed','2embed RU','moviesapi.club animetv','apimocine tv'];
   }
 
-  return ['.cc','.in','player.videasy.net','2embed','2embed RU'];
+  return ['vidsrcme.ru','player.videasy.net','apimocine tv'];
 }
 
 function getPreferredServer(mediaType, requestedServer, item = {}) {
