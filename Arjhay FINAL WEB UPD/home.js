@@ -630,11 +630,20 @@ updateWatchMeta();
 applyWatchMode();
 }
 
+function ensureIframeFullscreenPermissions(frame) {
+  if (!frame) return;
+  frame.setAttribute('allow', 'autoplay *; fullscreen *; encrypted-media *; picture-in-picture *; web-share *');
+  frame.setAttribute('allowfullscreen', '');
+  frame.setAttribute('webkitallowfullscreen', '');
+  frame.setAttribute('mozallowfullscreen', '');
+}
+
 function changeServer() {
   const frame = document.getElementById('modal-video');
   const serverSelect = document.getElementById('server');
 
   if (!frame || !serverSelect || !currentItem.id) return;
+  ensureIframeFullscreenPermissions(frame);
 
   const server = getPreferredServer(currentItem.media_type, serverSelect.value, currentItem);
 serverSelect.value = server;

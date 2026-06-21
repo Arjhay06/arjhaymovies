@@ -371,7 +371,7 @@ body {
 .watch-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 270px;
-  column-gap: 0;
+  column-gap: 16px;
   row-gap: 8px;
   padding: 6px 18px 18px;
   align-items: start;
@@ -628,7 +628,7 @@ body {
   position: sticky;
   top: 76px;
   align-self: start;
-  margin-left: -320px;
+  margin-left: 0;
   max-height: calc(100vh - 88px);
   overflow: hidden;
   background: rgba(255,255,255,0.02);
