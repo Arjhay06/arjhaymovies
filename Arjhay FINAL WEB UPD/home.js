@@ -419,7 +419,7 @@ function goToWatch(item) {
     poster: item.poster_path || '',
     season: item.season || '',
     episode: item.episode || '',
-    server: item.server || localStorage.getItem('lastServer') || 'vidsrc.icu'
+    server: item.server || 'vidstuck'
   });
 
   window.location.href = `watch.html?${params.toString()}`;
@@ -575,6 +575,7 @@ function showHoverPreview(item, cardEl, isHistory) {
     <div class="hp-media">
       <img src="${IMG_URL}${imgPath}" alt="">
       <div class="hp-media-fade"></div>
+      ${isHistory ? '<button class="hp-remove" type="button" title="Remove from Continue watching">×</button>' : ''}
       <div class="hp-logo-title">${truncateText(item.title || item.name || '', 40)}</div>
     </div>
     <div class="hp-info">
@@ -602,6 +603,15 @@ function showHoverPreview(item, cardEl, isHistory) {
   el.querySelectorAll('.hp-ghost:not(.hp-more)').forEach(btn => {
     btn.onclick = event => event.stopPropagation();
   });
+
+  const removeBtn = el.querySelector('.hp-remove');
+  if (removeBtn) {
+    removeBtn.onclick = event => {
+      event.stopPropagation();
+      removeFromHistory(item);
+      hideHoverPreview();
+    };
+  }
 
   el.classList.add('show');
   positionHoverPreview(cardEl);
@@ -639,10 +649,7 @@ function createPosterCard(item, isHistory = false) {
 
     removeBtn.addEventListener('click', event => {
       event.stopPropagation();
-      let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
-      history = history.filter(entry => !(entry.id === item.id && entry.media_type === item.media_type));
-      localStorage.setItem('watchHistory', JSON.stringify(history));
-      renderHistory();
+      removeFromHistory(item);
     });
 
     card.appendChild(removeBtn);
@@ -730,6 +737,13 @@ function toggleSeeAll(containerId) {
 }
 
 /* ---------- HISTORY ---------- */
+function removeFromHistory(item) {
+  let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
+  history = history.filter(entry => !(entry.id === item.id && entry.media_type === item.media_type));
+  localStorage.setItem('watchHistory', JSON.stringify(history));
+  renderHistory();
+}
+
 function addToHistory(item) {
   const entry = {
     id: item.id,
@@ -738,7 +752,7 @@ function addToHistory(item) {
     media_type: item.media_type || 'movie',
     season: item.season || null,
     episode: item.episode || null,
-    server: document.getElementById('server')?.value || item.server || localStorage.getItem('lastServer') || 'vidsrc.icu',
+    server: document.getElementById('server')?.value || item.server || 'vidstuck',
     updatedAt: Date.now()
   };
 
@@ -1342,7 +1356,7 @@ async function initWatchPage() {
   const poster = params.get('poster') || '';
   const season = params.get('season') ? Number(params.get('season')) : 1;
   const episode = params.get('episode') ? Number(params.get('episode')) : 1;
-  const server = params.get('server') || localStorage.getItem('lastServer') || 'vidsrc.icu';
+  const server = params.get('server') || 'vidstuck';
 
   currentItem = {
     id,
