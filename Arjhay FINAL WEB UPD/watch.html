@@ -8,16 +8,35 @@
   <link rel="stylesheet" href="home.css" />
   <script defer src="home.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="main">
-    <header class="top-nav">
-      <a href="index.html" class="brand">Arjhay<span>TV</span></a>
+    <div class="page-loader show" id="page-loader">
+      <div class="loader-ring"></div>
+      <div class="loader-brand">Arjhay<span>TV</span></div>
+    </div>
 
-      <div class="nav-icons">
-        <button type="button" class="icon-btn" onclick="openSearchModal()" aria-label="Search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
+    <header class="top-nav" id="top-nav">
+      <div class="nav-left">
+        <a href="index.html" class="brand">Arjhay<span>TV</span></a>
+
+        <nav class="nav-tabs">
+          <a href="index.html?tab=home" class="nav-tab" data-tab="home">Home</a>
+          <a href="index.html?tab=movies" class="nav-tab" data-tab="movies">Movies</a>
+          <a href="index.html?tab=tvshows" class="nav-tab" data-tab="tvshows">TV Shows</a>
+        </nav>
+      </div>
+
+      <div class="nav-right">
+        <div class="nav-search" id="nav-search">
+          <button type="button" class="nav-search-btn" onclick="toggleNavSearch()" aria-label="Search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+          <input type="text" id="search-input" class="nav-search-input" placeholder="Titles, people, genres" oninput="searchTMDB()" aria-label="Search titles" />
+        </div>
       </div>
     </header>
 
@@ -48,18 +67,21 @@
             </div>
 
             <div class="watch-server-wrap">
-              <label for="server">Server</label>
-              <select id="server">
-                <option value="vidsrcme.ru">Vidsrcme.ru</option>
+              <label>Server</label>
+              <button type="button" class="server-trigger" id="server-trigger" onclick="openServerPanel()">
+                <i class="fa-solid fa-server"></i>
+                <span id="server-trigger-name">Select server</span>
+                <i class="fa-solid fa-chevron-down server-trigger-caret"></i>
+              </button>
+              <select id="server" class="visually-hidden" aria-hidden="true" tabindex="-1">
+                <option value="vidstuck">VidStuck</option>
+                <option value="vidsrc.party">Vidsrc Party</option>
                 <option value="vidsrc.icu">Vidsrc.cc</option>
                 <option value="player.videasy.net">Player.Videasy.net</option>
                 <option value="2embed">2Embed</option>
-                <option value="2embed RU">2Embed RU</option>
                 <option value="2Anime">2Anime</option>
                 <option value="moviesapi.club animetv">MoviesAPI Club TV</option>
-                <option value="moviesapi.club movie">MoviesAPI Club Movie</option>
                 <option value="multiembed.mov">MultiEmbed</option>
-                <option value="apimocine-tv">ApiMocine TV</option>
                 <option value="apimocine-movie">ApiMocine Movie</option>
               </select>
             </div>
@@ -118,7 +140,12 @@
 
       <aside class="watch-right" id="episode-sidebar">
         <div class="episode-sidebar-top">
-          <select id="season-select"></select>
+          <button type="button" class="server-trigger" id="season-trigger" onclick="openSeasonPanel()">
+            <i class="fa-solid fa-layer-group"></i>
+            <span id="season-trigger-name">Season 1</span>
+            <i class="fa-solid fa-chevron-down server-trigger-caret"></i>
+          </button>
+          <select id="season-select" class="visually-hidden" aria-hidden="true" tabindex="-1"></select>
 
           <div class="episode-search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -132,16 +159,43 @@
 
     <div class="search-modal" id="search-modal">
       <div class="search-panel">
-        <div class="search-input-wrap">
-          <input
-            type="text"
-            id="search-input"
-            placeholder="Search for a movie or show..."
-            oninput="searchTMDB()"
-          />
-          <button class="search-close" type="button" onclick="closeSearchModal()">×</button>
+        <div class="search-results-head">
+          <span class="search-results-title">Search results</span>
+          <button class="search-close" type="button" onclick="closeSearchModal()" aria-label="Close search">×</button>
         </div>
         <div class="search-results-grid" id="search-results"></div>
+      </div>
+    </div>
+
+    <div class="server-modal" id="server-modal">
+      <div class="server-panel">
+        <div class="server-panel-head">
+          <div class="server-panel-title">
+            <i class="fa-solid fa-server"></i>
+            <div>
+              <h3>Streaming Servers</h3>
+              <p>Switch if video buffers or fails to play</p>
+            </div>
+          </div>
+          <button class="server-close" type="button" onclick="closeServerPanel()" aria-label="Close">×</button>
+        </div>
+        <div class="server-list" id="server-list"></div>
+      </div>
+    </div>
+
+    <div class="server-modal" id="season-modal">
+      <div class="server-panel">
+        <div class="server-panel-head">
+          <div class="server-panel-title">
+            <i class="fa-solid fa-layer-group"></i>
+            <div>
+              <h3>Seasons</h3>
+              <p>Pick a season to watch</p>
+            </div>
+          </div>
+          <button class="server-close" type="button" onclick="closeSeasonPanel()" aria-label="Close">×</button>
+        </div>
+        <div class="server-list" id="season-list"></div>
       </div>
     </div>
   </div>
