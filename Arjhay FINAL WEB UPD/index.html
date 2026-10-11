@@ -8,27 +8,38 @@
   <link rel="stylesheet" href="home.css" />
   <script defer src="home.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header class="top-nav">
-    <a href="index.html" class="brand">Arjhay<span>TV</span></a>
+  <div class="intro-splash" id="intro-splash">
+    <div class="intro-logo">Arjhay<span>TV</span></div>
+  </div>
 
-    <nav class="tabs">
-      <button class="tab active" type="button" data-tab="home">Home</button>
-      <button class="tab" type="button" data-tab="movies">Movies</button>
-      <button class="tab" type="button" data-tab="tvshows">TV Shows</button>
-    </nav>
+  <div class="page-loader" id="page-loader">
+    <div class="loader-ring"></div>
+    <div class="loader-brand">Arjhay<span>TV</span></div>
+  </div>
 
-    <div class="nav-icons">
-      <button type="button" class="icon-btn" onclick="openSearchModal()" aria-label="Search">
-        <i class="fa-solid fa-magnifying-glass"></i>
-      </button>
-      <button type="button" class="icon-btn" aria-label="Notifications">
-        <i class="fa-solid fa-bell"></i>
-      </button>
-      <button type="button" class="icon-btn" aria-label="Menu">
-        <i class="fa-solid fa-table-cells"></i>
-      </button>
+  <header class="top-nav" id="top-nav">
+    <div class="nav-left">
+      <a href="index.html" class="brand">Arjhay<span>TV</span></a>
+
+      <nav class="nav-tabs">
+        <a href="index.html?tab=home" class="nav-tab active" data-tab="home">Home</a>
+        <a href="index.html?tab=movies" class="nav-tab" data-tab="movies">Movies</a>
+        <a href="index.html?tab=tvshows" class="nav-tab" data-tab="tvshows">TV Shows</a>
+      </nav>
+    </div>
+
+    <div class="nav-right">
+      <div class="nav-search" id="nav-search">
+        <button type="button" class="nav-search-btn" onclick="toggleNavSearch()" aria-label="Search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+        <input type="text" id="search-input" class="nav-search-input" placeholder="Titles, people, genres" oninput="searchTMDB()" aria-label="Search titles" />
+      </div>
     </div>
   </header>
 
@@ -36,24 +47,34 @@
     <!-- HERO -->
     <section class="hero-banner" id="hero-banner">
       <div class="hero-backdrop" id="hero-backdrop"></div>
+      <div class="hero-vignette"></div>
+
+      <button class="hero-mute" id="hero-mute" type="button" aria-label="Toggle sound">
+        <i class="fa-solid fa-volume-xmark"></i>
+      </button>
 
       <div class="hero-content">
+        <h1 id="hero-title" class="hero-title">Loading...</h1>
+
         <div class="hero-meta">
-          <span class="imdb-badge">IMDb</span>
-          <span id="hero-rating">7.8 Rating</span>
+          <span id="hero-type" class="hero-type">Movie</span>
+          <span id="hero-year">2026</span>
+          <span id="hero-rating">★ 7.8</span>
           <span id="hero-translation" class="hero-translation">Sub/Dub Available</span>
         </div>
 
-        <h1 id="hero-title">Loading...</h1>
-        <p id="hero-overview">Please wait...</p>
+        <p id="hero-overview" class="hero-overview">Please wait...</p>
 
         <div class="hero-actions">
-          <button id="hero-watch-btn" class="watch-now-btn" type="button">Watch now</button>
+          <button id="hero-watch-btn" class="hero-play-btn" type="button"><i class="fa-solid fa-play"></i> Play</button>
+          <button id="hero-info-btn" class="hero-info-btn" type="button"><i class="fa-solid fa-circle-info"></i> More Info</button>
         </div>
       </div>
 
-      <button class="hero-arrow hero-prev" type="button" onclick="prevHero()">❮</button>
-      <button class="hero-arrow hero-next" type="button" onclick="nextHero()">❯</button>
+      <div class="hero-rank" id="hero-rank">
+        <span class="hero-top10">TOP<br>10</span>
+        <span id="hero-rank-text" class="hero-rank-text">#1 in Movies Today</span>
+      </div>
     </section>
 
 
@@ -96,14 +117,9 @@
 
   <div class="search-modal" id="search-modal">
     <div class="search-panel">
-      <div class="search-input-wrap">
-        <input
-          type="text"
-          id="search-input"
-          placeholder="Search for a movie or show..."
-          oninput="searchTMDB()"
-        />
-        <button class="search-close" type="button" onclick="closeSearchModal()">×</button>
+      <div class="search-results-head">
+        <span class="search-results-title">Search results</span>
+        <button class="search-close" type="button" onclick="closeSearchModal()" aria-label="Close search">×</button>
       </div>
       <div class="search-results-grid" id="search-results"></div>
     </div>
