@@ -32,14 +32,14 @@ function isAnimeTitle(item) {
 
 function getAllowedServers(mediaType, item = {}) {
   if (mediaType === 'movie') {
-    return ['multiembed.mov','multiembed.mov','vidsrc.icu','player.videasy.net','2embed','2embed RU','moviesapi.club movie','apimocine movie'];
+    return ['vidstuck','vidsrc.party','multiembed.mov','vidsrc.icu','player.videasy.net','2embed','apimocine-movie'];
   }
 
   if (isAnimeTitle(item)) {
-    return ['vidsrcme.ru','.cc','.in','2Anime','2embed','2embed RU','moviesapi.club animetv','apimocine tv'];
+    return ['vidstuck','vidsrc.party','2Anime','2embed','moviesapi.club animetv'];
   }
 
-  return ['vidsrcme.ru','player.videasy.net','apimocine-tv'];
+  return ['vidstuck','vidsrc.party','player.videasy.net'];
 }
 
 function getPreferredServer(mediaType, requestedServer, item = {}) {
@@ -47,6 +47,190 @@ function getPreferredServer(mediaType, requestedServer, item = {}) {
   if (allowed.includes(requestedServer)) return requestedServer;
   return allowed[0];
 }
+
+const SERVER_META = {
+  'vidstuck': { name: 'VidStuck', badge: '13+ HOSTS • HD', quality: '1080p Multi-Host', sub: 'Multi-Sub', hue: 'teal' },
+  'vidsrc.party': { name: 'VidSrc Party', badge: 'FAST • 1080P HD', quality: '1080p Fast HD', sub: 'Multi-Sub', hue: 'green' },
+  'vidsrcme.ru': { name: 'VidSrc', badge: 'FAST • HD', quality: '1080p Multi', sub: 'Multi-Sub', hue: 'teal' },
+  'vidsrc.icu': { name: 'VidSrc CC', badge: 'STABLE • HD', quality: '1080p', sub: 'Sub/Dub', hue: 'green' },
+  'player.videasy.net': { name: 'Videasy', badge: 'HD • FAST', quality: '1080p', sub: 'Multi-Sub', hue: 'teal' },
+  '2embed': { name: '2Embed', badge: 'MULTI-HOST', quality: '1080p', sub: 'Multi-Sub', hue: 'green' },
+  '2embed RU': { name: '2Embed RU', badge: 'BACKUP • HD', quality: '720p+', sub: 'Multi-Sub', hue: 'teal' },
+  '2Anime': { name: '2Anime', badge: 'ANIME • SUB', quality: '1080p', sub: 'Sub', hue: 'green' },
+  'moviesapi.club animetv': { name: 'MoviesAPI TV', badge: 'ANIME • HD', quality: '1080p', sub: 'Sub/Dub', hue: 'teal' },
+  'moviesapi.club movie': { name: 'MoviesAPI', badge: 'HD', quality: '1080p', sub: 'Multi-Sub', hue: 'green' },
+  'multiembed.mov': { name: 'MultiEmbed', badge: '13+ HOSTS • HD', quality: '1080p Multi-Host', sub: 'Multi-Sub', hue: 'teal' },
+  'apimocine-tv': { name: 'ApiMocine TV', badge: 'FAST • 1080P HD', quality: '1080p Fast HD', sub: 'Multi-Sub', hue: 'green' },
+  'apimocine-movie': { name: 'ApiMocine', badge: 'FAST • 1080P', quality: '1080p Fast', sub: 'Multi-Sub', hue: 'teal' }
+};
+
+function serverMeta(value) {
+  return SERVER_META[value] || { name: value, badge: 'HD', quality: 'Auto', sub: 'Sub', hue: 'teal' };
+}
+
+function updateServerTriggerLabel() {
+  const sel = document.getElementById('server');
+  const nameEl = document.getElementById('server-trigger-name');
+  if (!sel || !nameEl) return;
+  nameEl.textContent = serverMeta(sel.value).name;
+}
+
+function renderServerPanel() {
+  const sel = document.getElementById('server');
+  const list = document.getElementById('server-list');
+  if (!sel || !list) return;
+
+  list.innerHTML = '';
+
+  Array.from(sel.options).forEach(option => {
+    if (option.hidden) return;
+    const meta = serverMeta(option.value);
+    const selected = option.value === sel.value;
+
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `server-card hue-${meta.hue}${selected ? ' selected' : ''}`;
+    card.innerHTML = `
+      <div class="server-card-top">
+        <span class="server-card-name">${meta.name}${selected ? ' <i class="fa-solid fa-check"></i>' : ''}</span>
+        <span class="server-badge">${meta.badge}</span>
+      </div>
+      <div class="server-card-bottom">
+        <span class="server-quality">${meta.quality}</span>
+        <span class="server-sub">${meta.sub}</span>
+      </div>
+    `;
+    card.addEventListener('click', () => selectServer(option.value));
+    list.appendChild(card);
+  });
+}
+
+function selectServer(value) {
+  const sel = document.getElementById('server');
+  if (!sel) return;
+  sel.value = value;
+  currentItem.server = value;
+  localStorage.setItem('lastServer', value);
+  addToHistory(currentItem);
+  changeServer();
+  updateServerTriggerLabel();
+  renderServerPanel();
+  closeServerPanel();
+}
+
+function openServerPanel() {
+  renderServerPanel();
+  const modal = document.getElementById('server-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+  positionServerPanel();
+  requestAnimationFrame(positionServerPanel);
+}
+
+function positionAnchoredPanel(modal, trigger) {
+  const panel = modal ? modal.querySelector('.server-panel') : null;
+  if (!modal || !trigger || !panel || !modal.classList.contains('open')) return;
+
+  const rect = trigger.getBoundingClientRect();
+  const width = Math.min(360, window.innerWidth - 24);
+  panel.style.width = `${width}px`;
+
+  let left = rect.right - width;
+  left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
+
+  const panelHeight = panel.offsetHeight || 400;
+  let top = rect.bottom + 8;
+  if (top + panelHeight > window.innerHeight - 12) {
+    top = Math.max(78, rect.top - panelHeight - 8);
+  }
+
+  panel.style.left = `${left}px`;
+  panel.style.top = `${top}px`;
+}
+
+function positionServerPanel() {
+  positionAnchoredPanel(document.getElementById('server-modal'), document.getElementById('server-trigger'));
+}
+
+function positionSeasonPanel() {
+  positionAnchoredPanel(document.getElementById('season-modal'), document.getElementById('season-trigger'));
+}
+
+function repositionPanels() {
+  positionServerPanel();
+  positionSeasonPanel();
+}
+
+function closeServerPanel() {
+  const modal = document.getElementById('server-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+window.openServerPanel = openServerPanel;
+window.closeServerPanel = closeServerPanel;
+
+function updateSeasonTriggerLabel() {
+  const sel = document.getElementById('season-select');
+  const nameEl = document.getElementById('season-trigger-name');
+  if (!sel || !nameEl) return;
+  const opt = sel.options[sel.selectedIndex];
+  nameEl.textContent = opt ? opt.textContent : `Season ${currentItem.season || 1}`;
+}
+
+function renderSeasonPanel() {
+  const sel = document.getElementById('season-select');
+  const list = document.getElementById('season-list');
+  if (!sel || !list) return;
+  list.innerHTML = '';
+
+  currentSeasons.forEach(season => {
+    const num = season.season_number;
+    const selected = Number(currentItem.season) === Number(num);
+
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `server-card${selected ? ' selected' : ''}`;
+    card.innerHTML = `
+      <div class="server-card-top">
+        <span class="server-card-name">${season.name || `Season ${num}`}${selected ? ' <i class="fa-solid fa-check"></i>' : ''}</span>
+        <span class="server-badge">${season.episode_count || 0} EP</span>
+      </div>
+    `;
+    card.addEventListener('click', () => selectSeason(num));
+    list.appendChild(card);
+  });
+}
+
+function selectSeason(num) {
+  const sel = document.getElementById('season-select');
+  if (sel) sel.value = String(num);
+  currentItem.season = Number(num);
+  currentItem.episode = null;
+  addToHistory(currentItem);
+  updateWatchMeta();
+  updateSeasonTriggerLabel();
+  renderSeasonCards();
+  renderSeasonPanel();
+  displayEpisodes(currentItem);
+  closeSeasonPanel();
+}
+
+function openSeasonPanel() {
+  renderSeasonPanel();
+  const modal = document.getElementById('season-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+  positionSeasonPanel();
+  requestAnimationFrame(positionSeasonPanel);
+}
+
+function closeSeasonPanel() {
+  const modal = document.getElementById('season-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+window.openSeasonPanel = openSeasonPanel;
+window.closeSeasonPanel = closeSeasonPanel;
 
 function syncServerOptions() {
   const serverSelect = document.getElementById('server');
@@ -67,6 +251,9 @@ function syncServerOptions() {
   serverSelect.value = nextServer;
   currentItem.server = nextServer;
   localStorage.setItem('lastServer', nextServer);
+
+  updateServerTriggerLabel();
+  renderServerPanel();
 }
 
 function truncateText(str, maxLength = 28) {
@@ -79,32 +266,93 @@ function isWatchPage() {
   return page === 'watch.html' || page === 'watch';
 }
 
-function openSearchModal() {
-  const modal = document.getElementById('search-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
-
+function expandNavSearch() {
+  const wrap = document.getElementById('nav-search');
   const input = document.getElementById('search-input');
-  if (input) {
-    input.value = '';
-    input.focus();
-  }
+  if (!wrap) return;
+  wrap.classList.add('open');
+  if (input) input.focus();
+}
 
-  const results = document.getElementById('search-results');
-  if (results) results.innerHTML = '';
+function toggleNavSearch() {
+  const wrap = document.getElementById('nav-search');
+  const input = document.getElementById('search-input');
+  if (!wrap) return;
+
+  if (wrap.classList.contains('open')) {
+    if (input && input.value.trim()) {
+      input.value = '';
+      closeSearchModal();
+    }
+    wrap.classList.remove('open');
+  } else {
+    expandNavSearch();
+  }
+}
+
+function openSearchModal() {
+  expandNavSearch();
 }
 
 function closeSearchModal() {
   const modal = document.getElementById('search-modal');
-  if (!modal) return;
-  modal.style.display = 'none';
+  if (modal) modal.classList.remove('open');
 
   const results = document.getElementById('search-results');
   if (results) results.innerHTML = '';
+
+  const input = document.getElementById('search-input');
+  if (input) input.value = '';
+
+  const wrap = document.getElementById('nav-search');
+  if (wrap) wrap.classList.remove('open');
+}
+
+function setupNavbar() {
+  const nav = document.getElementById('top-nav');
+  if (nav) {
+    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 20);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  const wrap = document.getElementById('nav-search');
+  const input = document.getElementById('search-input');
+
+  if (input) {
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeSearchModal();
+    });
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (wrap && !input.value.trim()) wrap.classList.remove('open');
+      }, 150);
+    });
+  }
+
+  document.addEventListener('click', event => {
+    const modal = document.getElementById('search-modal');
+    if (modal && event.target === modal) closeSearchModal();
+    const serverModal = document.getElementById('server-modal');
+    if (serverModal && event.target === serverModal) closeServerPanel();
+    const seasonModal = document.getElementById('season-modal');
+    if (seasonModal && event.target === seasonModal) closeSeasonPanel();
+    if (wrap && !wrap.contains(event.target) && !(input && input.value.trim())) {
+      wrap.classList.remove('open');
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { closeServerPanel(); closeSeasonPanel(); }
+  });
+
+  window.addEventListener('resize', repositionPanels);
+  window.addEventListener('scroll', repositionPanels, true);
 }
 
 window.openSearchModal = openSearchModal;
 window.closeSearchModal = closeSearchModal;
+window.toggleNavSearch = toggleNavSearch;
 
 async function fetchTrending(type) {
   const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
@@ -143,7 +391,27 @@ function getYear(item) {
   return raw ? raw.slice(0, 4) : '';
 }
 
+function showPageLoader() {
+  const loader = document.getElementById('page-loader');
+  if (loader) loader.classList.add('show');
+}
+
+function hidePageLoader() {
+  const loader = document.getElementById('page-loader');
+  if (loader) loader.classList.remove('show');
+}
+
+function setupIntro() {
+  const splash = document.getElementById('intro-splash');
+  if (!splash) return;
+  const dismiss = () => splash.classList.add('done');
+  splash.addEventListener('click', dismiss);
+  setTimeout(dismiss, 3400);
+}
+
 function goToWatch(item) {
+  showPageLoader();
+
   const params = new URLSearchParams({
     id: item.id,
     media_type: item.media_type || 'movie',
@@ -179,21 +447,35 @@ function renderHero() {
   const title = document.getElementById('hero-title');
   const overview = document.getElementById('hero-overview');
   const rating = document.getElementById('hero-rating');
+  const typeEl = document.getElementById('hero-type');
+  const yearEl = document.getElementById('hero-year');
   const translation = document.getElementById('hero-translation');
   const watchBtn = document.getElementById('hero-watch-btn');
+  const infoBtn = document.getElementById('hero-info-btn');
+  const rankText = document.getElementById('hero-rank-text');
 
-  if (!backdrop || !title || !overview || !rating || !watchBtn) return;
+  if (!backdrop || !title || !overview) return;
 
   backdrop.style.backgroundImage = `url(${IMG_URL}${item.backdrop_path || item.poster_path})`;
-  title.textContent = item.title || item.name || 'Untitled';
-  overview.textContent = truncateText(item.overview || 'No description available.', 220);
-  rating.textContent = item.vote_average ? `${item.vote_average.toFixed(1)} Rating` : '7.0 Rating';
+  backdrop.classList.remove('is-animating');
+  void backdrop.offsetWidth;
+  backdrop.classList.add('is-animating');
 
-  if (translation) {
-    translation.textContent = getTranslationLabel(item);
+  title.textContent = item.title || item.name || 'Untitled';
+  overview.textContent = truncateText(item.overview || 'No description available.', 160);
+
+  if (rating) rating.textContent = item.vote_average ? `★ ${item.vote_average.toFixed(1)}` : '★ 7.8';
+  if (typeEl) typeEl.textContent = item.media_type === 'movie' ? 'Movie' : 'Series';
+  if (yearEl) yearEl.textContent = getYear(item) || '2026';
+  if (translation) translation.textContent = getTranslationLabel(item);
+
+  if (rankText) {
+    const label = item.media_type === 'movie' ? 'Movies' : 'TV Shows';
+    rankText.textContent = `#${heroIndex + 1} in ${label} Today`;
   }
 
-  watchBtn.onclick = () => goToWatch(item);
+  if (watchBtn) watchBtn.onclick = () => goToWatch(item);
+  if (infoBtn) infoBtn.onclick = () => goToWatch(item);
 }
 
 function nextHero() {
@@ -215,7 +497,20 @@ function startHeroAuto() {
   if (heroTimer) clearInterval(heroTimer);
   heroTimer = setInterval(() => {
     nextHero();
-  }, 6000);
+  }, 8000);
+}
+
+function setupHeroExtras() {
+  const mute = document.getElementById('hero-mute');
+  if (mute && !mute.dataset.wired) {
+    mute.dataset.wired = '1';
+    mute.addEventListener('click', () => {
+      const icon = mute.querySelector('i');
+      if (!icon) return;
+      const muted = icon.classList.contains('fa-volume-xmark');
+      icon.className = muted ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+    });
+  }
 }
 
 /* ---------- CARDS ---------- */
@@ -227,6 +522,91 @@ function buildProgressLabel(item) {
     return 'Continue movie';
   }
   return '';
+}
+
+let hoverPreviewEl = null;
+let hoverShowTimer = null;
+let hoverHideTimer = null;
+
+function ensureHoverPreview() {
+  if (hoverPreviewEl) return hoverPreviewEl;
+  const el = document.createElement('div');
+  el.className = 'hover-preview';
+  el.addEventListener('mouseenter', () => clearTimeout(hoverHideTimer));
+  el.addEventListener('mouseleave', hideHoverPreview);
+  document.body.appendChild(el);
+  document.addEventListener('scroll', hideHoverPreview, true);
+  hoverPreviewEl = el;
+  return el;
+}
+
+function hideHoverPreview() {
+  clearTimeout(hoverShowTimer);
+  clearTimeout(hoverHideTimer);
+  hoverHideTimer = setTimeout(() => {
+    if (hoverPreviewEl) hoverPreviewEl.classList.remove('show');
+  }, 120);
+}
+
+function positionHoverPreview(cardEl) {
+  if (!hoverPreviewEl) return;
+  const rect = cardEl.getBoundingClientRect();
+  const width = Math.max(300, rect.width * 1.6);
+  const vw = window.innerWidth;
+  let left = rect.left + rect.width / 2 - width / 2;
+  left = Math.max(12, Math.min(left, vw - width - 12));
+  hoverPreviewEl.style.width = `${width}px`;
+  const height = hoverPreviewEl.offsetHeight || 300;
+  let top = rect.top + rect.height / 2 - height / 2;
+  top = Math.max(74, Math.min(top, window.innerHeight - height - 12));
+  hoverPreviewEl.style.left = `${left}px`;
+  hoverPreviewEl.style.top = `${top}px`;
+}
+
+function showHoverPreview(item, cardEl, isHistory) {
+  const el = ensureHoverPreview();
+  const imgPath = item.backdrop_path || item.poster_path;
+  const year = getYear(item);
+  const typeLabel = item.media_type === 'movie' ? 'Movie' : 'Series';
+  const match = Math.round((item.vote_average || 7) * 10);
+  const progress = isHistory ? buildProgressLabel(item) : '';
+
+  el.innerHTML = `
+    <div class="hp-media">
+      <img src="${IMG_URL}${imgPath}" alt="">
+      <div class="hp-media-fade"></div>
+      <div class="hp-logo-title">${truncateText(item.title || item.name || '', 40)}</div>
+    </div>
+    <div class="hp-info">
+      <div class="hp-actions">
+        <button class="hp-btn hp-play" title="Play"><i class="fa-solid fa-play"></i></button>
+        <button class="hp-btn hp-ghost" title="Add"><i class="fa-solid fa-plus"></i></button>
+        <button class="hp-btn hp-ghost" title="Like"><i class="fa-regular fa-thumbs-up"></i></button>
+        <button class="hp-btn hp-ghost hp-more" title="More"><i class="fa-solid fa-chevron-down"></i></button>
+      </div>
+      <div class="hp-title">${truncateText(item.title || item.name || '', 44)}</div>
+      <div class="hp-meta">
+        <span class="hp-match">${match}% Match</span>
+        <span>${typeLabel}</span>
+        <span>${year}</span>
+        <span class="hp-hd">HD</span>
+      </div>
+      ${progress ? `<div class="hp-progress"><span class="hp-progress-bar"></span></div><div class="hp-progress-label">${progress}</div>` : ''}
+    </div>
+  `;
+
+  const go = () => goToWatch(item);
+  el.querySelector('.hp-media').onclick = go;
+  el.querySelector('.hp-play').onclick = event => { event.stopPropagation(); go(); };
+  el.querySelector('.hp-more').onclick = event => { event.stopPropagation(); go(); };
+  el.querySelectorAll('.hp-ghost:not(.hp-more)').forEach(btn => {
+    btn.onclick = event => event.stopPropagation();
+  });
+
+  el.classList.add('show');
+  positionHoverPreview(cardEl);
+  const img = el.querySelector('img');
+  if (img) img.addEventListener('load', () => positionHoverPreview(cardEl), { once: true });
 }
 
 function createPosterCard(item, isHistory = false) {
@@ -270,6 +650,18 @@ function createPosterCard(item, isHistory = false) {
 
   card.addEventListener('click', () => {
     goToWatch(item);
+  });
+
+  card.addEventListener('mouseenter', () => {
+    if (window.matchMedia('(hover: none)').matches) return;
+    clearTimeout(hoverHideTimer);
+    clearTimeout(hoverShowTimer);
+    hoverShowTimer = setTimeout(() => showHoverPreview(item, card, isHistory), 350);
+  });
+
+  card.addEventListener('mouseleave', () => {
+    clearTimeout(hoverShowTimer);
+    hideHoverPreview();
   });
 
   return card;
@@ -444,7 +836,7 @@ function updateMainRowTitle(tabName) {
 function activateTab(tabName) {
   activeTab = tabName;
 
-  const tabs = document.querySelectorAll('.tab');
+  const tabs = document.querySelectorAll('.nav-tab');
   tabs.forEach(tab => {
     tab.classList.toggle('active', tab.dataset.tab === tabName);
   });
@@ -455,12 +847,15 @@ function activateTab(tabName) {
 }
 
 function setupTabs() {
-  const tabs = document.querySelectorAll('.tab');
+  const tabs = document.querySelectorAll('.nav-tab');
 
   tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
+    tab.addEventListener('click', event => {
+      event.preventDefault();
       expandedRows['movies-list'] = false;
       activateTab(tab.dataset.tab);
+      const target = tab.dataset.tab;
+      history.replaceState(null, '', target === 'home' ? 'index.html' : `index.html?tab=${target}`);
     });
   });
 }
@@ -654,6 +1049,16 @@ serverSelect.value = server;
   let url = '';
 
   switch (server) {
+    case 'vidstuck':
+      url = currentItem.media_type === 'movie'
+        ? `https://vidstuck.xyz/embed/movie/${currentItem.id}?branding=ArjhayTV&server=orion&loading=1&back=true`
+        : `https://vidstuck.xyz/embed/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}?branding=ArjhayTV&server=orion&loading=1&back=true`;
+      break;
+    case 'vidsrc.party':
+      url = currentItem.media_type === 'movie'
+        ? `https://www.vidsrc.party/embed/movie/${currentItem.id}`
+        : `https://www.vidsrc.party/embed/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
+      break;
     case 'vidsrc.icu':
       url =`https://vidsrc.icu/embed/movie/${currentItem.id}`;
       break;
@@ -724,18 +1129,7 @@ function renderSeasonCards() {
     `;
 
     card.addEventListener('click', () => {
-      const seasonSelect = document.getElementById('season-select');
-      currentItem.season = Number(season.season_number);
-      currentItem.episode = null;
-
-      if (seasonSelect) {
-        seasonSelect.value = String(season.season_number);
-      }
-
-      addToHistory(currentItem);
-      updateWatchMeta();
-      renderSeasonCards();
-      displayEpisodes(currentItem);
+      selectSeason(season.season_number);
     });
 
     container.appendChild(card);
@@ -774,6 +1168,8 @@ async function loadSeasons(item) {
   };
 
   renderSeasonCards();
+  updateSeasonTriggerLabel();
+  renderSeasonPanel();
 }
 
 function filterEpisodeCards() {
@@ -863,13 +1259,19 @@ async function displayEpisodes(item) {
 async function searchTMDB() {
   const input = document.getElementById('search-input');
   const results = document.getElementById('search-results');
+  const modal = document.getElementById('search-modal');
 
   if (!input || !results) return;
 
   const query = input.value.trim();
   results.innerHTML = '';
 
-  if (!query) return;
+  if (!query) {
+    if (modal) modal.classList.remove('open');
+    return;
+  }
+
+  if (modal) modal.classList.add('open');
 
   const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
   const data = await res.json();
@@ -900,6 +1302,8 @@ window.searchTMDB = searchTMDB;
 
 /* ---------- INIT ---------- */
 async function initHomePage() {
+  setupIntro();
+
   const movies = (await fetchTrending('movie')).map(item => ({ ...item, media_type: 'movie' }));
   const topRatedTV = await fetchTopRatedTV();
   const anime = await fetchTrendingAnime();
@@ -915,6 +1319,7 @@ async function initHomePage() {
   allData.tvshows = combinedShows;
 
   setHeroSource(allData.movies);
+  setupHeroExtras();
 
   renderPosterRow(allData.movies, 'movies-list');
   renderPosterRow(allData.series, 'tvshows-list');
@@ -923,7 +1328,10 @@ async function initHomePage() {
 
   setupTabs();
   setupSeeAllLinks();
-  activateTab('home');
+
+  const params = new URLSearchParams(window.location.search);
+  const startTab = params.get('tab');
+  activateTab(['home', 'movies', 'tvshows'].includes(startTab) ? startTab : 'home');
 }
 
 async function initWatchPage() {
@@ -945,6 +1353,12 @@ async function initWatchPage() {
     episode,
     server
   };
+
+  const videoFrame = document.getElementById('modal-video');
+  if (videoFrame) {
+    videoFrame.addEventListener('load', hidePageLoader);
+  }
+  setTimeout(hidePageLoader, 7000);
 
   const serverSelect = document.getElementById('server');
   if (serverSelect) {
@@ -990,6 +1404,8 @@ syncServerOptions();
 
 async function init() {
   try {
+    setupNavbar();
+
     if (isWatchPage()) {
       await initWatchPage();
     } else {
