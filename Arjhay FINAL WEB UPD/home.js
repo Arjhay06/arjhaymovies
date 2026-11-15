@@ -32,14 +32,14 @@ function isAnimeTitle(item) {
 
 function getAllowedServers(mediaType, item = {}) {
   if (mediaType === 'movie') {
-    return ['vidstuck','vidsrc.party','multiembed.mov','vidsrc.icu','player.videasy.net','2embed','apimocine-movie'];
+    return ['vidrift','viduki','vidsrc.sh','vidfast','vidlink','vidsrc.party','2embed'];
   }
 
   if (isAnimeTitle(item)) {
-    return ['vidstuck','vidsrc.party','2Anime','2embed','moviesapi.club animetv'];
+    return ['vidrift','viduki','vidsrc.sh','vidfast','vidlink','vidsrc.party','2Anime','2embed','moviesapi.club animetv'];
   }
 
-  return ['vidstuck','vidsrc.party','player.videasy.net'];
+  return ['vidrift','viduki','vidsrc.sh','vidfast','vidlink','vidsrc.party'];
 }
 
 function getPreferredServer(mediaType, requestedServer, item = {}) {
@@ -49,19 +49,18 @@ function getPreferredServer(mediaType, requestedServer, item = {}) {
 }
 
 const SERVER_META = {
-  'vidstuck': { name: 'VidStuck', badge: '13+ HOSTS • HD', quality: '1080p Multi-Host', sub: 'Multi-Sub', hue: 'teal' },
+  'vidrift': { name: 'VidRift', badge: 'DEFAULT', quality: 'Auto', sub: 'Subtitles', hue: 'teal' },
+  'viduki': { name: 'Viduki', badge: 'MOVIES • TV', quality: 'Auto', sub: 'Subtitles', hue: 'green' },
+  'vidsrc.sh': { name: 'VidSRC.SH', badge: 'MOVIES • TV', quality: 'Auto', sub: 'Subtitles', hue: 'teal' },
+  'vidfast': { name: 'Vidfast', badge: 'MOVIES • TV', quality: 'Auto', sub: 'Subtitles', hue: 'green' },
+  'vidlink': { name: 'Vidlink', badge: 'MOVIES • TV', quality: 'Auto', sub: 'Subtitles', hue: 'teal' },
   'vidsrc.party': { name: 'VidSrc Party', badge: 'FAST • 1080P HD', quality: '1080p Fast HD', sub: 'Multi-Sub', hue: 'green' },
   'vidsrcme.ru': { name: 'VidSrc', badge: 'FAST • HD', quality: '1080p Multi', sub: 'Multi-Sub', hue: 'teal' },
-  'vidsrc.icu': { name: 'VidSrc CC', badge: 'STABLE • HD', quality: '1080p', sub: 'Sub/Dub', hue: 'green' },
-  'player.videasy.net': { name: 'Videasy', badge: 'HD • FAST', quality: '1080p', sub: 'Multi-Sub', hue: 'teal' },
   '2embed': { name: '2Embed', badge: 'MULTI-HOST', quality: '1080p', sub: 'Multi-Sub', hue: 'green' },
   '2embed RU': { name: '2Embed RU', badge: 'BACKUP • HD', quality: '720p+', sub: 'Multi-Sub', hue: 'teal' },
   '2Anime': { name: '2Anime', badge: 'ANIME • SUB', quality: '1080p', sub: 'Sub', hue: 'green' },
   'moviesapi.club animetv': { name: 'MoviesAPI TV', badge: 'ANIME • HD', quality: '1080p', sub: 'Sub/Dub', hue: 'teal' },
   'moviesapi.club movie': { name: 'MoviesAPI', badge: 'HD', quality: '1080p', sub: 'Multi-Sub', hue: 'green' },
-  'multiembed.mov': { name: 'MultiEmbed', badge: '13+ HOSTS • HD', quality: '1080p Multi-Host', sub: 'Multi-Sub', hue: 'teal' },
-  'apimocine-tv': { name: 'ApiMocine TV', badge: 'FAST • 1080P HD', quality: '1080p Fast HD', sub: 'Multi-Sub', hue: 'green' },
-  'apimocine-movie': { name: 'ApiMocine', badge: 'FAST • 1080P', quality: '1080p Fast', sub: 'Multi-Sub', hue: 'teal' }
 };
 
 function serverMeta(value) {
@@ -419,7 +418,7 @@ function goToWatch(item) {
     poster: item.poster_path || '',
     season: item.season || '',
     episode: item.episode || '',
-    server: item.server || 'vidstuck'
+    server: item.server || 'vidrift'
   });
 
   window.location.href = `watch.html?${params.toString()}`;
@@ -752,7 +751,7 @@ function addToHistory(item) {
     media_type: item.media_type || 'movie',
     season: item.season || null,
     episode: item.episode || null,
-    server: document.getElementById('server')?.value || item.server || 'vidstuck',
+    server: document.getElementById('server')?.value || item.server || 'vidrift',
     updatedAt: Date.now()
   };
 
@@ -1062,25 +1061,37 @@ serverSelect.value = server;
   const type = currentItem.media_type === 'movie' ? 'movie' : 'tv';
   let url = '';
 
+  const mediaPath = type === 'movie'
+    ? `movie/${currentItem.id}`
+    : `tv/${currentItem.id}/${currentItem.season || 1}/${currentItem.episode || 1}`;
+  const vidriftParams = new URLSearchParams({ brand: 'ArjhayTV', showTitle: '1' });
+  const title = currentItem.title || currentItem.name || '';
+  if (type === 'tv' && title) vidriftParams.set('title', title);
+  const vidriftUrl = `https://embed.vidrift.net/embed/${mediaPath}?${vidriftParams}`;
+
   switch (server) {
-    case 'vidstuck':
-      url = currentItem.media_type === 'movie'
-        ? `https://vidstuck.xyz/embed/movie/${currentItem.id}?branding=ArjhayTV&server=orion&loading=1&back=true`
-        : `https://vidstuck.xyz/embed/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}?branding=ArjhayTV&server=orion&loading=1&back=true`;
+    case 'vidrift':
+      url = vidriftUrl;
+      break;
+    case 'viduki':
+      url = `https://www.viduki.net/1/${mediaPath}?color=e01621`;
+      break;
+    case 'vidsrc.sh':
+      url = `https://vidsrc.sh/embed/${mediaPath}`;
+      break;
+    case 'vidfast':
+      url = `https://vidfast.vc/${mediaPath}`;
+      break;
+    case 'vidlink':
+      url = `https://vidlink.pro/${mediaPath}`;
       break;
     case 'vidsrc.party':
       url = currentItem.media_type === 'movie'
         ? `https://www.vidsrc.party/embed/movie/${currentItem.id}`
         : `https://www.vidsrc.party/embed/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
-    case 'vidsrc.icu':
-      url =`https://vidsrc.icu/embed/movie/${currentItem.id}`;
-      break;
       case 'vidsrcme.ru':
       url = `https://vidsrcme.ru/embed/${type}?tmdb=${currentItem.id}&season=${currentItem.season}&episode=${currentItem.episode}`;
-      break;
-    case 'player.videasy.net':
-      url = `https://player.videasy.net/${type}/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
     case '2embed':
       url = currentItem.episode ? `https://www.2embed.cc/embedtv/${currentItem.id}&s=${currentItem.season}&e=${currentItem.episode}` : `https://www.2embed.cc/embed/${currentItem.id}`;
@@ -1094,23 +1105,14 @@ serverSelect.value = server;
       url = `https://2anime.xyz/embed/${slug}-episode-${ep}`;
       break;
     }
-    case 'multiembed.mov':
-      url = `https://multiembed.mov/?video_id=${currentItem.id}&tmdb=1${currentItem.episode ? `&s=${currentItem.season}&e=${currentItem.episode}` : ''}`;
-      break;
     case 'moviesapi.club animetv':
       url = `https://moviesapi.club/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
       break;
     case 'moviesapi.club movie':
       url = `https://moviesapi.club/movie/${currentItem.id}`;
       break;
-    case 'apimocine-tv':
-      url = `https://apimocine.vercel.app/tv/${currentItem.id}/${currentItem.season}/${currentItem.episode}`;
-      break;
-    case 'apimocine-movie':
-      url = `https://apimocine.vercel.app/movie/${currentItem.id}`;
-      break;
     default:
-      url = `https://vidsrc.icu/v2/embed/${type}/${currentItem.id}`;
+      url = vidriftUrl;
   }
 
   frame.src = url;
@@ -1356,7 +1358,7 @@ async function initWatchPage() {
   const poster = params.get('poster') || '';
   const season = params.get('season') ? Number(params.get('season')) : 1;
   const episode = params.get('episode') ? Number(params.get('episode')) : 1;
-  const server = params.get('server') || 'vidstuck';
+  const server = params.get('server') || 'vidrift';
 
   currentItem = {
     id,

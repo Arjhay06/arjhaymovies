@@ -1670,3 +1670,17 @@ footer {
   .intro-splash, .intro-logo, .loader-ring { animation: none; }
   .intro-logo { opacity: 1; transform: none; }
 }
+
+/* Keep hidden watch controls from extending the document width. */
+.watch-page #server.visually-hidden,
+.watch-page #season-select.visually-hidden {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+}
+
+.watch-page {
+  overflow-x: clip;
+}
