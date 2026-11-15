@@ -1684,3 +1684,14 @@ footer {
 .watch-page {
   overflow-x: clip;
 }
+
+/* Allow all search results to scroll inside the fixed overlay. */
+.search-modal {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+.search-panel {
+  flex-shrink: 0;
+  min-width: 0;
+}

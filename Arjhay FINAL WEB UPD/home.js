@@ -24,13 +24,110 @@ const expandedRows = {
   'history-list': false
 };
 
-// 🔥 ONLY SHOW IMPORTANT PARTS CHANGED (your file is long)
+const ANILIST_FIELDS = `
+  id type format title { english romaji native }
+  coverImage { large } bannerImage description(asHtml: false)
+  startDate { year month day } averageScore status countryOfOrigin
+  genres episodes duration nextAiringEpisode { episode }
+`;
+
+async function requestAniList(query, variables = {}) {
+  const response = await fetch('https://graphql.anilist.co', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ query, variables })
+  });
+  const result = await response.json();
+  if (!response.ok || result.errors?.length || !result.data) {
+    throw new Error(result.errors?.[0]?.message || `AniList request failed (${response.status})`);
+  }
+  return result.data;
+}
+
+function imageUrl(value) {
+  if (!value) return '';
+  return /^https:\/\//i.test(value) ? value : IMG_URL + value;
+}
+
+function sameMedia(a, b) {
+  return a.id === b.id && a.media_type === b.media_type && (a.source || 'tmdb') === (b.source || 'tmdb');
+}
+
+function normalizeAnime(media) {
+  const date = media.startDate;
+  const start = date?.year ? `${date.year}-${String(date.month || 1).padStart(2, '0')}-${String(date.day || 1).padStart(2, '0')}` : '';
+  return {
+    id: media.id, source: 'anilist', media_type: media.format === 'MOVIE' ? 'movie' : 'tv',
+    title: media.title?.english || media.title?.romaji || media.title?.native || 'Untitled',
+    poster_path: media.coverImage?.large || '', backdrop_path: media.bannerImage || media.coverImage?.large || '',
+    overview: (media.description || '').replace(/<[^>]*>/g, ''),
+    first_air_date: start, release_date: start, vote_average: (media.averageScore || 0) / 10,
+    status: (media.status || '').replace(/_/g, ' '), origin_country: [media.countryOfOrigin].filter(Boolean),
+    production_countries: media.countryOfOrigin ? [{name: media.countryOfOrigin}] : [],
+    genres: (media.genres || []).map(name => ({name})), original_language: '',
+    runtime: media.duration, episode_run_time: [media.duration],
+    animeEpisodeCount: media.episodes, nextAiringEpisode: media.nextAiringEpisode,
+    animeStatus: media.status, relations: media.relations, season: 1
+  };
+}
+
+function animeEpisodes(item) {
+  if (!item || item.animeStatus === 'NOT_YET_RELEASED') return [];
+  const count = item.nextAiringEpisode?.episode
+    ? Math.max(0, item.nextAiringEpisode.episode - 1)
+    : (item.animeEpisodeCount || 0);
+  return Array.from({length: count}, (_, index) => ({
+    episode_number: index + 1, name: `Episode ${index + 1}`,
+    overview: '', air_date: '', still_path: item.backdrop_path || item.poster_path
+  }));
+}
+
+function loadAnimeEntries(item) {
+  const related = (watchDetails.relations?.edges || [])
+    .filter(edge => ['PREQUEL', 'SEQUEL'].includes(edge.relationType) && edge.node.type === 'ANIME')
+    .map(edge => normalizeAnime(edge.node));
+  const entries = [watchDetails, ...related]
+    .filter((entry, index, all) => all.findIndex(other => other.id === entry.id) === index)
+    .sort((a, b) => a.first_air_date.localeCompare(b.first_air_date));
+  currentSeasons = entries.map(anime => ({
+    season_number: anime.id, name: anime.title, episode_count: anime.animeEpisodeCount,
+    poster_path: anime.poster_path, anime
+  }));
+  const select = document.getElementById('season-select');
+  if (!select) return;
+  select.innerHTML = '';
+  currentSeasons.forEach(entry => {
+    const option = document.createElement('option');
+    option.value = entry.season_number;
+    option.textContent = entry.name;
+    select.appendChild(option);
+  });
+  select.value = String(item.id);
+  select.onchange = () => selectSeason(Number(select.value));
+  const heading = document.querySelector('#watch-seasons-card h2');
+  if (heading) heading.textContent = 'Related anime';
+  const modalHeading = document.querySelector('#season-modal h3');
+  if (modalHeading) modalHeading.textContent = 'Anime entries';
+  const modalDescription = document.querySelector('#season-modal .server-panel-title p');
+  if (modalDescription) modalDescription.textContent = 'Pick an anime entry to watch';
+  const entryLabel = document.querySelector('#season-info-item .meta-label');
+  if (entryLabel) entryLabel.textContent = 'Entry';
+  renderSeasonCards();
+  updateSeasonTriggerLabel();
+  renderSeasonPanel();
+}
+
+function isTMDBAnime(item) {
+  return item.original_language === 'ja' && (item.genre_ids || []).includes(16);
+}
+
 
 function isAnimeTitle(item) {
-  return item?.original_language === 'ja' || watchDetails?.original_language === 'ja';
+  return item?.source === 'anilist' || isTMDBAnime(item || {});
 }
 
 function getAllowedServers(mediaType, item = {}) {
+  if (item.source === 'anilist') return ['vidrift'];
   if (mediaType === 'movie') {
     return ['vidrift','viduki','vidsrc.sh','vidfast','vidlink','vidsrc.party','2embed'];
   }
@@ -184,7 +281,7 @@ function renderSeasonPanel() {
 
   currentSeasons.forEach(season => {
     const num = season.season_number;
-    const selected = Number(currentItem.season) === Number(num);
+    const selected = Number(currentItem.source === 'anilist' ? currentItem.id : currentItem.season) === Number(num);
 
     const card = document.createElement('button');
     card.type = 'button';
@@ -201,6 +298,11 @@ function renderSeasonPanel() {
 }
 
 function selectSeason(num) {
+  if (currentItem.source === 'anilist') {
+    const entry = currentSeasons.find(season => Number(season.season_number) === Number(num));
+    if (entry) goToWatch({ ...entry.anime, episode: 1, server: 'vidrift' });
+    return;
+  }
   const sel = document.getElementById('season-select');
   if (sel) sel.value = String(num);
   currentItem.season = Number(num);
@@ -294,6 +396,8 @@ function openSearchModal() {
 }
 
 function closeSearchModal() {
+  clearTimeout(searchTimer);
+  searchVersion += 1;
   const modal = document.getElementById('search-modal');
   if (modal) modal.classList.remove('open');
 
@@ -362,27 +466,16 @@ async function fetchTrending(type) {
 async function fetchTopRatedTV() {
   const res = await fetch(`${BASE_URL}/tv/top_rated?api_key=${API_KEY}`);
   const data = await res.json();
-  return (data.results || []).map(item => ({ ...item, media_type: 'tv' }));
+  return (data.results || []).filter(item => !isTMDBAnime(item)).map(item => ({ ...item, media_type: 'tv' }));
 }
 
 async function fetchTrendingAnime() {
-  let all = [];
-
-  for (let page = 1; page <= 3; page += 1) {
-    const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
-    const data = await res.json();
-
-    const filtered = (data.results || []).filter(
-      item =>
-        item.original_language === 'ja' &&
-        Array.isArray(item.genre_ids) &&
-        item.genre_ids.includes(16)
-    );
-
-    all = all.concat(filtered.map(item => ({ ...item, media_type: 'tv' })));
-  }
-
-  return all;
+  const data = await requestAniList(`query {
+    Page(page: 1, perPage: 30) {
+      media(type: ANIME, isAdult: false, sort: TRENDING_DESC) { ${ANILIST_FIELDS} }
+    }
+  }`);
+  return data.Page.media.map(normalizeAnime);
 }
 
 function getYear(item) {
@@ -413,6 +506,7 @@ function goToWatch(item) {
 
   const params = new URLSearchParams({
     id: item.id,
+    source: item.source || 'tmdb',
     media_type: item.media_type || 'movie',
     title: item.title || item.name || '',
     poster: item.poster_path || '',
@@ -455,7 +549,7 @@ function renderHero() {
 
   if (!backdrop || !title || !overview) return;
 
-  backdrop.style.backgroundImage = `url(${IMG_URL}${item.backdrop_path || item.poster_path})`;
+  backdrop.style.backgroundImage = `url(${imageUrl(item.backdrop_path || item.poster_path)})`;
   backdrop.classList.remove('is-animating');
   void backdrop.offsetWidth;
   backdrop.classList.add('is-animating');
@@ -572,7 +666,7 @@ function showHoverPreview(item, cardEl, isHistory) {
 
   el.innerHTML = `
     <div class="hp-media">
-      <img src="${IMG_URL}${imgPath}" alt="">
+      <img src="${imageUrl(imgPath)}" alt="">
       <div class="hp-media-fade"></div>
       ${isHistory ? '<button class="hp-remove" type="button" title="Remove from Continue watching">×</button>' : ''}
       <div class="hp-logo-title">${truncateText(item.title || item.name || '', 40)}</div>
@@ -627,7 +721,7 @@ function createPosterCard(item, isHistory = false) {
 
   card.innerHTML = `
     <div class="poster-thumb">
-      <img src="${IMG_URL}${item.poster_path || item.backdrop_path}" alt="${item.title || item.name || ''}">
+      <img src="${imageUrl(item.poster_path || item.backdrop_path)}" alt="${item.title || item.name || ''}">
       <div class="poster-badges">
   <span class="poster-badge">cc</span>
   <span class="poster-badge">${Math.floor(item.vote_average || 10)}</span>
@@ -738,7 +832,7 @@ function toggleSeeAll(containerId) {
 /* ---------- HISTORY ---------- */
 function removeFromHistory(item) {
   let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
-  history = history.filter(entry => !(entry.id === item.id && entry.media_type === item.media_type));
+  history = history.filter(entry => !(sameMedia(entry, item)));
   localStorage.setItem('watchHistory', JSON.stringify(history));
   renderHistory();
 }
@@ -746,6 +840,7 @@ function removeFromHistory(item) {
 function addToHistory(item) {
   const entry = {
     id: item.id,
+    source: item.source || 'tmdb',
     title: item.title || item.name || '',
     poster_path: item.poster_path || item.poster || '',
     media_type: item.media_type || 'movie',
@@ -756,7 +851,7 @@ function addToHistory(item) {
   };
 
   let history = JSON.parse(localStorage.getItem('watchHistory')) || [];
-  history = history.filter(h => !(h.id === entry.id && h.media_type === entry.media_type));
+  history = history.filter(h => !(sameMedia(h, entry)));
   history.unshift(entry);
 
   localStorage.setItem('watchHistory', JSON.stringify(history.slice(0, 30)));
@@ -936,7 +1031,7 @@ function updateWatchMeta() {
   if (posterEl) {
     const posterPath = details.poster_path || currentItem.poster_path || '';
     if (posterPath) {
-      posterEl.src = `${IMG_URL}${posterPath}`;
+      posterEl.src = `${imageUrl(posterPath)}`;
       posterEl.alt = details.title || details.name || 'Poster';
     }
   }
@@ -956,7 +1051,7 @@ function updateWatchMeta() {
   }
 
   if (typeEl) {
-    typeEl.textContent = isMovie ? 'MOVIE' : 'TV';
+    typeEl.textContent = currentItem.source === 'anilist' ? 'ANIME' : (isMovie ? 'MOVIE' : 'TV');
   }
 
   if (statusEl) {
@@ -986,7 +1081,7 @@ function updateWatchMeta() {
   }
 
   if (seasonEl) {
-    seasonEl.textContent = isMovie ? '—' : `Season ${currentItem.season || 1}`;
+    seasonEl.textContent = currentItem.source === 'anilist' ? currentItem.title : (isMovie ? '—' : `Season ${currentItem.season || 1}`);
   }
 
   if (episodeEl) {
@@ -1014,6 +1109,21 @@ function applyWatchMode() {
 }
 
 async function fetchWatchDetails(item) {
+  if (item.source === 'anilist') {
+    const data = await requestAniList(`query ($id: Int!) {
+      Media(id: $id, type: ANIME) {
+        ${ANILIST_FIELDS}
+        relations { edges { relationType node { ${ANILIST_FIELDS} } } }
+      }
+    }`, { id: item.id });
+    if (!data.Media) throw new Error('Anime not found');
+    watchDetails = normalizeAnime(data.Media);
+    Object.assign(currentItem, watchDetails, { episode: item.episode || 1, season: 1 });
+    syncServerOptions();
+    updateWatchMeta();
+    applyWatchMode();
+    return;
+  }
   const type = item.media_type === 'movie' ? 'movie' : 'tv';
   const res = await fetch(`${BASE_URL}/${type}/${item.id}?api_key=${API_KEY}`);
 
@@ -1067,7 +1177,8 @@ serverSelect.value = server;
   const vidriftParams = new URLSearchParams({ brand: 'ArjhayTV', showTitle: '1' });
   const title = currentItem.title || currentItem.name || '';
   if (type === 'tv' && title) vidriftParams.set('title', title);
-  const vidriftUrl = `https://embed.vidrift.net/embed/${mediaPath}?${vidriftParams}`;
+  const vidriftPath = currentItem.source === 'anilist' ? `anilist/${currentItem.id}/${currentItem.episode || 1}` : mediaPath;
+  const vidriftUrl = `https://embed.vidrift.net/embed/${vidriftPath}?${vidriftParams}`;
 
   switch (server) {
     case 'vidrift':
@@ -1131,13 +1242,13 @@ function renderSeasonCards() {
     card.type = 'button';
     card.className = 'season-card';
 
-    if (Number(currentItem.season) === Number(season.season_number)) {
+    if (Number(currentItem.source === 'anilist' ? currentItem.id : currentItem.season) === Number(season.season_number)) {
       card.classList.add('active');
     }
 
     const imagePath = season.poster_path || watchDetails?.backdrop_path || watchDetails?.poster_path || '';
     card.innerHTML = `
-      ${imagePath ? `<img src="${IMG_URL}${imagePath}" alt="${season.name || `Season ${season.season_number}`}">` : ''}
+      ${imagePath ? `<img src="${imageUrl(imagePath)}" alt="${season.name || `Season ${season.season_number}`}">` : ''}
       <div class="season-card-body">
         <div class="season-card-title">${season.name || `Season ${season.season_number}`}</div>
         <div class="season-card-sub">${season.episode_count || 0} episodes</div>
@@ -1153,6 +1264,7 @@ function renderSeasonCards() {
 }
 
 async function loadSeasons(item) {
+  if (item.source === 'anilist') return loadAnimeEntries(item);
   const seasonSelect = document.getElementById('season-select');
   if (!seasonSelect) return;
 
@@ -1208,8 +1320,13 @@ async function displayEpisodes(item) {
   const seasonNumber = item.season || Number(document.getElementById('season-select')?.value || 1);
   item.season = seasonNumber;
 
-  const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNumber}?api_key=${API_KEY}`);
-  const data = await res.json();
+  let data;
+  if (item.source === 'anilist') {
+    data = { episodes: animeEpisodes(watchDetails) };
+  } else {
+    const res = await fetch(`${BASE_URL}/tv/${item.id}/season/${seasonNumber}?api_key=${API_KEY}`);
+    data = await res.json();
+  }
 
   currentEpisodes = data.episodes || [];
 
@@ -1218,7 +1335,7 @@ async function displayEpisodes(item) {
     return;
   }
 
-  if (!item.episode) {
+  if (!item.episode || (item.source === 'anilist' && !currentEpisodes.some(ep => ep.episode_number === item.episode))) {
     item.episode = currentEpisodes[0].episode_number;
   }
 
@@ -1233,10 +1350,10 @@ async function displayEpisodes(item) {
     }
 
     const thumbSrc = ep.still_path
-      ? `${IMG_URL}${ep.still_path}`
+      ? `${imageUrl(ep.still_path)}`
       : (watchDetails?.backdrop_path
-          ? `${IMG_URL}${watchDetails.backdrop_path}`
-          : (watchDetails?.poster_path ? `${IMG_URL}${watchDetails.poster_path}` : ''));
+          ? `${imageUrl(watchDetails.backdrop_path)}`
+          : (watchDetails?.poster_path ? `${imageUrl(watchDetails.poster_path)}` : ''));
 
     card.innerHTML = `
       <div class="episode-thumb">
@@ -1272,46 +1389,62 @@ async function displayEpisodes(item) {
 
 
 /* ---------- SEARCH ---------- */
-async function searchTMDB() {
+let searchTimer = null;
+let searchVersion = 0;
+
+function searchTMDB() {
+  clearTimeout(searchTimer);
+  const version = ++searchVersion;
   const input = document.getElementById('search-input');
   const results = document.getElementById('search-results');
   const modal = document.getElementById('search-modal');
-
-  if (!input || !results) return;
-
+  if (!input || !results || !modal) return;
   const query = input.value.trim();
   results.innerHTML = '';
+  modal.classList.toggle('open', Boolean(query));
+  modal.scrollTop = 0;
+  if (!query) return;
+  results.textContent = 'Searching...';
+  searchTimer = setTimeout(() => runSearch(query, version), 300);
+}
 
-  if (!query) {
-    if (modal) modal.classList.remove('open');
-    return;
-  }
-
-  if (modal) modal.classList.add('open');
-
-  const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
-  const data = await res.json();
-
-  (data.results || []).forEach(item => {
-    if (!item.poster_path) return;
-    if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
-
+async function runSearch(query, version) {
+  const results = document.getElementById('search-results');
+  const outcomes = await Promise.allSettled([
+    fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`)
+      .then(response => { if (!response.ok) throw new Error('Movie/TV search unavailable'); return response.json(); }),
+    requestAniList(`query ($search: String!) {
+      Page(page: 1, perPage: 30) {
+        media(search: $search, type: ANIME, isAdult: false, sort: SEARCH_MATCH) { ${ANILIST_FIELDS} }
+      }
+    }`, {search: query})
+  ]);
+  if (version !== searchVersion || !results) return;
+  results.innerHTML = '';
+  const movies = outcomes[0].status === 'fulfilled' ? (outcomes[0].value.results || []) : [];
+  const anime = outcomes[1].status === 'fulfilled' ? outcomes[1].value.Page.media.map(normalizeAnime) : [];
+  const items = [...movies.filter(item => !isTMDBAnime(item)), ...anime];
+  items.forEach(item => {
+    if (!item.poster_path || !['movie','tv'].includes(item.media_type)) return;
     const card = document.createElement('div');
     card.className = 'search-card';
-    card.innerHTML = `
-      <img src="${IMG_URL}${item.poster_path}" alt="${item.title || item.name || ''}">
-      <p>${truncateText(item.title || item.name || '', 24)}</p>
-    `;
-
-    card.addEventListener('click', () => {
-      goToWatch({
-        ...item,
-        media_type: item.media_type
-      });
-    });
-
+    const image = document.createElement('img');
+    image.src = imageUrl(item.poster_path);
+    image.alt = item.title || item.name || '';
+    image.loading = 'lazy';
+    const label = document.createElement('p');
+    label.textContent = truncateText(item.title || item.name || '', 24);
+    card.append(image, label);
+    card.addEventListener('click', () => goToWatch(item));
     results.appendChild(card);
   });
+  if (outcomes.some(outcome => outcome.status === 'rejected')) {
+    const notice = document.createElement('p');
+    notice.textContent = outcomes[1].status === 'rejected'
+      ? 'Anime search is temporarily unavailable. Please try again.'
+      : 'Movie and TV search is temporarily unavailable. Please try again.';
+    results.appendChild(notice);
+  } else if (!results.children.length) results.textContent = 'No results found.';
 }
 
 window.searchTMDB = searchTMDB;
@@ -1320,14 +1453,16 @@ window.searchTMDB = searchTMDB;
 async function initHomePage() {
   setupIntro();
 
-  const movies = (await fetchTrending('movie')).map(item => ({ ...item, media_type: 'movie' }));
+  const movies = (await fetchTrending('movie')).filter(item => !isTMDBAnime(item)).map(item => ({ ...item, media_type: 'movie' }));
   const topRatedTV = await fetchTopRatedTV();
-  const anime = await fetchTrendingAnime();
+  let anime = [];
+  try { anime = await fetchTrendingAnime(); }
+  catch (error) { console.error('AniList unavailable:', error); }
 
   const combinedShows = [...topRatedTV, ...anime]
-    .filter((item, index, arr) => arr.findIndex(x => x.id === item.id) === index)
-    .slice(0, 50)
-    .map(item => ({ ...item, media_type: 'tv' }));
+    .filter((item, index, arr) => arr.findIndex(x => sameMedia(x, item)) === index)
+    .filter(item => item.media_type === 'tv')
+    .slice(0, 50);
 
   allData.movies = movies;
   allData.series = topRatedTV;
@@ -1340,6 +1475,7 @@ async function initHomePage() {
   renderPosterRow(allData.movies, 'movies-list');
   renderPosterRow(allData.series, 'tvshows-list');
   renderPosterRow(allData.anime, 'anime-list');
+  if (!anime.length) document.getElementById('anime-list').textContent = 'Anime is temporarily unavailable. Please try again later.';
   renderHistory();
 
   setupTabs();
@@ -1362,6 +1498,7 @@ async function initWatchPage() {
 
   currentItem = {
     id,
+    source: params.get('source') === 'anilist' ? 'anilist' : 'tmdb',
     media_type: mediaType,
     title,
     poster_path: poster,
@@ -1396,7 +1533,7 @@ syncServerOptions();
   try {
     await fetchWatchDetails(currentItem);
 
-    if (mediaType === 'tv') {
+    if (currentItem.media_type === 'tv') {
       await loadSeasons(currentItem);
       await displayEpisodes(currentItem);
     } else {
